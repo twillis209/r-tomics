@@ -1,0 +1,18 @@
+name: tomics-dev
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- r-base
+- r-data.table >= 1.17
+- r-magrittr
+- r-dplyr
+- r-stringr
+- r-r.utils
+- r-devtools
+- r-usethis
+- r-attachment
+- r-ggplot2
+- r-ggtext
+- r-ggbreak
+- r-scales
