@@ -8,7 +8,8 @@ process_sumstats_for_manhattan(
   dat,
   chr_col = "chromosome",
   bp_col = "base_pair_location",
-  p_col = "p_value"
+  p_col = "p_value",
+  x_chr_no = 23
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ process_sumstats_for_manhattan(
 \item{bp_col}{character string containing the column name for position}
 
 \item{p_col}{character string containing the column name for p-value}
+
+\item{x_chr_no}{index of X chromosome}
 }
 \value{
 list containing data.table with updated chromosome and position

@@ -1,0 +1,49 @@
+context:
+  version: 0.0.1
+  r_version: 4.3
+package:
+  name: r-tomics
+  version: ${{ version }}
+source:
+  url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
+    }}/r-tomics_${{ version }}.tar.gz
+  sha256: d6b02cd7b6b25fb45a7809f5be5d1a677bfeac236330bb1c49a22bf4b0c6f5dd
+build:
+  script:
+    if [ ! -d "inst" ]; then
+        mkdir inst
+    fi
+    cp -r tests inst
+    R CMD INSTALL --build .
+requirements:
+  host:
+  - r-base >= ${{ r_version }}
+  - r-data.table (>= 1.15)
+  - r-dplyr
+  - r-ggplot2
+  - r-ggtext
+  - r-ggbreak
+  - r-magrittr
+  - r-scales
+  run:
+  - r-base
+  - r-data.table (>= 1.15)
+  - r-dplyr
+  - r-ggplot2
+  - r-ggtext
+  - r-ggbreak
+  - r-magrittr
+  - r-scales
+tests:
+- script:
+  - Rscript -e "library('tomics');"
+  - Rscript -e "library(tomics); testthat::test_package('tomics')"
+  requirements:
+    run:
+    - r-testthat
+about:
+  homepage: https://github.com/twillis209/r-tomics
+  summary: Useful functions for working with GWAS data.
+  description: This package contains utility functions for working with GWAS data, e.g. drawing Manhattan plots and running a fixed-effect meta-analysis.
+  license: MIT
+  repository: https://github.com/twillis209/r-tomics

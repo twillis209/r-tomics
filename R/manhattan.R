@@ -7,6 +7,7 @@
 ##' @param chr_col character string containing the column name for chromosome
 ##' @param bp_col character string containing the column name for position
 ##' @param p_col character string containing the column name for p-value
+##' @param x_chr_no index of X chromosome
 ##' @return list containing data.table with updated chromosome and position
 ##' columns, axis set, and y-axis limits
 ##' @author Daniel Roelfs
@@ -15,14 +16,14 @@
 ##' @importFrom dplyr group_by summarise mutate select inner_join filter pull
 ##' @importFrom stats lag
 ##' @export
-process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value") {
+process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", x_chr_no = 23) {
   chr <- bp <- max_bp <- bp_add <- bp_cum <- p <- NULL
 
   dat <- data.table::copy(dat)
 
   data.table::setnames(dat, c(chr_col, bp_col, p_col), c("chr", "bp", "p"))
 
-  dat[chr == "X", chr := 23]
+  dat[chr == "X", chr := x_chr_no]
 
   dat[, chr := as.integer(chr)]
 

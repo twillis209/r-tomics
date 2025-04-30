@@ -1,0 +1,5 @@
+inst
+..Rcheck
+dev
+*.Rcheck
+tomics_*.tar.gz
