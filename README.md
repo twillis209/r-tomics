@@ -17,7 +17,7 @@ What I do after making changes to source:
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
 
-The `recipe.yaml` file needs to have the following fields updated for a new version:
+The `recipe.yml` file needs to have the following fields updated for a new version:
 - version field
 - sha256 field
 
@@ -27,5 +27,9 @@ Using `rattler-build`:
 
 ```bash
 conda activate tomics-dev
-rattler-build build --recipe recipe.yaml --output-dir ../r-tomics
+rattler-build build --recipe recipe.yml --output-dir ../r-tomics
+```
+And then publishing on Anaconda:
+```bash
+rattler-build upload anaconda ../r-tomics/noarch/r-tomics-0.0.1-h4616a5c_0.conda --owner twillis209
 ```
