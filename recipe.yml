@@ -1,5 +1,5 @@
 context:
-  version: 0.0.1
+  version: 0.0.2
   r_version: 4.3
 package:
   name: r-tomics
@@ -9,7 +9,6 @@ source:
     }}/tomics_${{ version }}.tar.gz
   sha256: ecd6a23394afabc278fbe5d99f2228fdaa1bbb2da9a534b72bfbf75f1d932b0b
 build:
-  noarch: generic
   script:
     - if: unix
       then:

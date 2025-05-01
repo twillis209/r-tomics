@@ -7,7 +7,7 @@
 ##' @param chr_col character string containing the column name for chromosome
 ##' @param bp_col character string containing the column name for position
 ##' @param p_col character string containing the column name for p-value
-##' @param x_chr_no index of X chromosome
+##' @param chromosomes character vector containing chromosomes to include in the plot
 ##' @return list containing data.table with updated chromosome and position
 ##' columns, axis set, and y-axis limits
 ##' @author Daniel Roelfs
@@ -16,23 +16,21 @@
 ##' @importFrom dplyr group_by summarise mutate select inner_join filter pull
 ##' @importFrom stats lag
 ##' @export
-process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", x_chr_no = 23) {
+process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", chromosomes = as.character(1:23)) {
   chr <- bp <- max_bp <- bp_add <- bp_cum <- p <- NULL
 
   dat <- data.table::copy(dat)
 
   data.table::setnames(dat, c(chr_col, bp_col, p_col), c("chr", "bp", "p"))
 
-  dat[chr == "X", chr := x_chr_no]
+  dat <- dat[chr %in% chromosomes]
 
   dat[, chr := as.integer(chr)]
-
-  dat <- dat[chr %in% seq(1, 23)]
 
   data_cum <- dat %>%
     dplyr::group_by(chr) %>%
     dplyr::summarise(max_bp = max(bp)) %>%
-    dplyr::mutate(bp_add = stats::lag(cumsum(as.numeric(max_bp)), default = 0)) %>%
+    dplyr::mutate(bp_add = as.numeric(stats::lag(cumsum(as.numeric(max_bp)), default = 0))) %>%
     dplyr::select(chr, bp_add)
 
   data <- dat %>%
@@ -69,7 +67,6 @@ draw_manhattan <- function(processed_sumstats, palette = c("#E69F00", "#56B4E9",
   axis_set <- processed_sumstats$axis_set
 
   pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = p, color = as.factor(chr)), data = gwas_data) +
-    ggplot2::geom_hline(yintercept = 5e-8, color = "grey40", linetype = "dashed") +
     ggplot2::geom_point(size = 0.3) +
     ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
