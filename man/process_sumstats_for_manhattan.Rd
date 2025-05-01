@@ -9,7 +9,8 @@ process_sumstats_for_manhattan(
   chr_col = "chromosome",
   bp_col = "base_pair_location",
   p_col = "p_value",
-  x_chr_no = 23
+  chromosomes = as.character(1:23),
+  inter_chr_offset = 5e+07
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ process_sumstats_for_manhattan(
 
 \item{p_col}{character string containing the column name for p-value}
 
-\item{x_chr_no}{index of X chromosome}
+\item{chromosomes}{character vector containing chromosomes to include in the plot}
+
+\item{inter_chr_offset}{size of gap between chromosomes}
 }
 \value{
 list containing data.table with updated chromosome and position

@@ -8,15 +8,14 @@
 ##' @param bp_col character string containing the column name for position
 ##' @param p_col character string containing the column name for p-value
 ##' @param chromosomes character vector containing chromosomes to include in the plot
+##' @param inter_chr_offset size of gap between chromosomes
 ##' @return list containing data.table with updated chromosome and position
 ##' columns, axis set, and y-axis limits
 ##' @author Daniel Roelfs
 ##' @author Tom Willis
 ##' @import data.table
-##' @importFrom dplyr group_by summarise mutate select inner_join filter pull
-##' @importFrom stats lag
 ##' @export
-process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", chromosomes = as.character(1:23)) {
+process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", chromosomes = as.character(1:23), inter_chr_offset = 5e7) {
   chr <- bp <- max_bp <- bp_add <- bp_cum <- p <- NULL
 
   dat <- data.table::copy(dat)
@@ -27,21 +26,20 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 
   dat[, chr := as.integer(chr)]
 
-  data_cum <- dat %>%
-    dplyr::group_by(chr) %>%
-    dplyr::summarise(max_bp = max(bp)) %>%
-    dplyr::mutate(bp_add = as.numeric(stats::lag(cumsum(as.numeric(max_bp)), default = 0))) %>%
-    dplyr::select(chr, bp_add)
+  data.table::setorder(dat, chr)
 
-  data <- dat %>%
-    dplyr::inner_join(data_cum, by = "chr") %>%
-    dplyr::mutate(bp_cum = as.numeric(bp) + as.numeric(bp_add))
+  bp_offsets <- dat[, .(max_bp = max(bp)), by = chr] %>%
+    .[, .(chr, bp_add = cumsum(as.numeric(data.table::shift(max_bp, n = 1, fill = 0, type = "lag"))))]
 
-  axis_set <- data %>%
-    dplyr::group_by(chr) %>%
-    dplyr::summarize(center = mean(bp_cum))
+  bp_offsets[, inter_chr := inter_chr_offset * (0:(.N - 1))]
 
-  return(list(data = data, axis_set = axis_set))
+  bp_offsets[, bp_add := bp_add + inter_chr]
+
+  dat[bp_offsets, on = "chr", bp_cum := bp + i.bp_add]
+
+  axis_set <- dat[, .(center = mean(bp_cum)), by = chr]
+
+  return(list(dat = dat, axis_set = axis_set))
 }
 
 ##' Draw Manhattan plot using processed summary statistics
@@ -56,14 +54,17 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @param y_limits limits for y axis
 ##' @author Daniel Roelfs
 ##' @author Tom Willis
-##' @importFrom ggplot2 ggplot geom_hline geom_point scale_x_continuous scale_color_manual scale_size_continuous scale_y_continuous labs theme ggtitle
+##' @importFrom ggplot2 ggplot geom_hline geom_point scale_x_continuous
+##' scale_color_manual scale_size_continuous scale_y_continuous labs theme ggtitle
 ##' @importFrom ggtext element_markdown
 ##' @importFrom ggbreak scale_y_break
 ##' @export
-draw_manhattan <- function(processed_sumstats, palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"), title = "", y_limits = c(1, 1e-10), y_axis_break = NULL) {
+draw_manhattan <- function(processed_sumstats,
+                           palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
+                           title = "", y_limits = c(1, 1e-10), y_axis_break = NULL) {
   chr <- bp_cum <- p <- NULL
 
-  gwas_data <- processed_sumstats$data
+  gwas_data <- processed_sumstats$dat
   axis_set <- processed_sumstats$axis_set
 
   pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = p, color = as.factor(chr)), data = gwas_data) +
@@ -114,6 +115,8 @@ neglog_trans <- function(base = exp(1)) {
 ##' @importFrom ggplot2 scale_x_continuous
 ##' @export
 scale_x_neglog10 <- function(...) {
+  .x <- NULL
+
   ggplot2::scale_x_continuous(...,
     trans = neglog_trans(base = 10),
     breaks = scales::trans_breaks(function(x) {
