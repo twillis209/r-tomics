@@ -7,7 +7,6 @@ test_that("Sumstats are correctly processed for plotting", {
 
   sumstats <- process_sumstats_for_manhattan(dat)
 
-  expect_equal(sumstats$data$chr, c(1, 1, 2, 3))
-  expect_equal(sumstats$data$bp_cum, c(3, 4, 8, 13))
-  expect_equal(sumstats$data$bp_add[1:4], c(2, 2, 5, 9))
+  expect_equal(sumstats$dat$chr, c(1, 1, 2, 3))
+  expect_equal(sumstats$dat$bp_cum, c(1, 2, 5 + 5e7, 10 + 1e8))
 })

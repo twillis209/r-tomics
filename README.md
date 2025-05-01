@@ -12,7 +12,7 @@ What I do after making changes to source:
   R -e "attachment::att_amend_desc()"
   R CMD build .
   # No pdflatex available on my Mac atm
-  R CMD check tomics_0.0.1.tar.gz --no-manual --no-build-vignettes
+  R CMD check tomics_0.0.2.tar.gz --no-manual --no-build-vignettes
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
@@ -31,5 +31,5 @@ rattler-build build --recipe recipe.yml --output-dir ../r-tomics
 ```
 And then publishing on Anaconda:
 ```bash
-rattler-build upload anaconda ../r-tomics/noarch/r-tomics-0.0.1-h4616a5c_0.conda --owner twillis209
+rattler-build upload anaconda ../r-tomics/noarch/r-tomics-0.0.2-h60d57d3_0.conda --owner twillis209
 ```
