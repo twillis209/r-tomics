@@ -7,7 +7,7 @@ package:
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: 13f18c72fb8cd0870f283e191b262cabbb4a590d52cafad4fd7b658fe424769d
+  sha256: a388e34b9f84c3f3001b553ab3bf81611ceb29b50837bd0d8a5bf2526d69180d
 build:
   noarch: generic
   script:
