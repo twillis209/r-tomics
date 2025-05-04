@@ -1,5 +1,5 @@
 context:
-  version: 0.0.4
+  version: 0.1.0
   r_version: 4.3
 package:
   name: r-tomics
