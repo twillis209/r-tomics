@@ -10,11 +10,17 @@ What I do after making changes to source:
 
 ```bash
   conda activate tomics-dev
+  # TODO update version number programmatically somehow
   R -e "devtools::document()"
   R -e "attachment::att_amend_desc()"
   R CMD build .
-  # No pdflatex available on my Mac atm
-  R CMD check $(ls -v tomics_*.tar.gz | tail -n 1) --no-manual --no-build-vignettes
+  latest=$(ls -v tomics_*.tar.gz | tail -n 1)
+  R CMD check $latest --no-manual --no-build-vignettes
+  version=$(echo "$latest" | sed -E 's/tomics_(.*)\.tar\.gz/\1/')
+  sha256=$(sha256sum "$latest" | awk '{print $1}')
+  # Only want to change first version
+  sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
+  sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
@@ -24,10 +30,10 @@ The `recipe.yml` file needs to have the following fields updated for a new versi
 - sha256 field
 
 ```bash
-git tag v0.0.x
-git push v0.0.x
+git tag "v$version"
+git push "v$version"
 # --notes can be used to specify notes string
-gh release create v0.0.x tomics_0_0.x.tar.gz --notes-from-tag
+gh release create "v$version" $latest --notes-from-tag
 ```
 
 # Build process
