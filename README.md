@@ -6,6 +6,8 @@ This R package is intended to house disparate functions I have found useful in p
 
 What I do after making changes to source:
 
+- increment version number
+
 ```bash
   conda activate tomics-dev
   R -e "devtools::document()"
@@ -20,6 +22,13 @@ The YAML file defining the `tomics-dev` `conda` environment is located in the pr
 The `recipe.yml` file needs to have the following fields updated for a new version:
 - version field
 - sha256 field
+
+```bash
+git tag v0.0.x
+git push v0.0.x
+# --notes can be used to specify notes string
+gh release create v0.0.x tomics_0_0.x.tar.gz --notes-from-tag
+```
 
 # Build process
 
