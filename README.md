@@ -14,7 +14,7 @@ What I do after making changes to source:
   R -e "attachment::att_amend_desc()"
   R CMD build .
   # No pdflatex available on my Mac atm
-  R CMD check tomics_0.0.1.tar.gz --no-manual --no-build-vignettes
+  R CMD check $(ls -v tomics_*.tar.gz | tail -n 1) --no-manual --no-build-vignettes
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
