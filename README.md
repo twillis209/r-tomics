@@ -19,7 +19,7 @@ What I do after making changes to source:
   version=$(echo "$latest" | sed -E 's/tomics_(.*)\.tar\.gz/\1/')
   sha256=$(sha256sum "$latest" | awk '{print $1}')
   # Only want to change first version
-  sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
+  sed -i -E "s/^\([[:space:]]*\)version: [0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/\1version: $version/" recipe.yml
   sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
 ```
 
@@ -27,7 +27,7 @@ The YAML file defining the `tomics-dev` `conda` environment is located in the pr
 
 ```bash
 git tag "v$version"
-git push "v$version"
+git push origin "v$version"
 # --notes can be used to specify notes string
 gh release create "v$version" $latest --notes-from-tag
 ```
