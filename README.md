@@ -27,7 +27,7 @@ The YAML file defining the `tomics-dev` `conda` environment is located in the pr
 
 ```bash
 git tag "v$version"
-git push "v$version"
+git push -f origin "v$version"
 # --notes can be used to specify notes string
 gh release create "v$version" $latest --notes-from-tag
 ```
@@ -43,4 +43,5 @@ rattler-build build --recipe recipe.yml --output-dir ../r-tomics
 And then publishing on Anaconda:
 ```bash
 rattler-build upload anaconda $(ls ../r-tomics/noarch/r-tomics-$version-*.conda) --owner twillis209
+rattler-build upload anaconda $(ls ../r-tomics/linux-64/r-tomics-$version-*.conda) --owner twillis209
 ```
