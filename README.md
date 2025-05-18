@@ -18,8 +18,8 @@ This R package is intended to house disparate functions I have found useful in p
   sha256=$(sha256sum "$latest" | awk '{print $1}')
   # Only want to change first version
   # NB: double backspaces for group because this is the osx version
-  sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\\1version: $version/" recipe.yml
-  sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\\1version: $version/" recipe.yml
+  sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.

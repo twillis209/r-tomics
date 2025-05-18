@@ -3,3 +3,6 @@ inst
 dev
 *.Rcheck
 tomics_*.tar.gz
+lead_snps.tsv
+manhattan_workshop.R
+*.tsv.gz
