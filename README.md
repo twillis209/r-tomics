@@ -22,7 +22,9 @@ This R package is intended to house disparate functions I have found useful in p
   sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
 ```
 
-The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
+The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory. 
+
+At the moment it's still necessary to update the dependencies in `recipe.yml`, should be able to fix it by parsing the YAML.
 
 It's necessary to `commit` again after the earlier steps, usually just amend the initial commit.
 

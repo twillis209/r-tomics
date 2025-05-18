@@ -25,6 +25,7 @@ requirements:
   - r-ggbreak
   - r-magrittr
   - r-scales
+  - r-ggrepel
   run:
   - r-base
   - r-data.table (>= 1.15)
@@ -34,6 +35,7 @@ requirements:
   - r-ggbreak
   - r-magrittr
   - r-scales
+  - r-ggrepel
 tests:
 - script:
   - Rscript -e "library('tomics');"
