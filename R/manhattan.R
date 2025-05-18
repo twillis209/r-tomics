@@ -16,7 +16,7 @@
 ##' @import data.table
 ##' @export
 process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", chromosomes = as.character(1:23), inter_chr_offset = 5e7) {
-  chr <- bp <- max_bp <- bp_add <- bp_cum <- p <- NULL
+  chr <- bp <- max_bp <- bp_add <- i.bp_add <- bp_cum <- inter_chr <- NULL
 
   dat <- data.table::copy(dat)
 
