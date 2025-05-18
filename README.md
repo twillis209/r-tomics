@@ -4,14 +4,12 @@ This R package is intended to house disparate functions I have found useful in p
 
 # Development workflow
 
-What I do after making changes to source:
-
-- increment version number
-
 ```bash
   conda activate tomics-dev
-  # TODO update version number programmatically somehow
+  # Need to commit changes prior to this as otherwise usethis::use_version() will complain
+  R -e "usethis::use_version('minor')"
   R -e "devtools::document()"
+  # NB: updates dependencies etc.
   R -e "attachment::att_amend_desc()"
   R CMD build .
   latest=$(ls -v tomics_*.tar.gz | tail -n 1)
@@ -19,11 +17,14 @@ What I do after making changes to source:
   version=$(echo "$latest" | sed -E 's/tomics_(.*)\.tar\.gz/\1/')
   sha256=$(sha256sum "$latest" | awk '{print $1}')
   # Only want to change first version
-  sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
-  sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  # NB: double backspaces for group because this is the osx version
+  sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\\1version: $version/" recipe.yml
+  sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
+
+It's necessary to `commit` again after the earlier steps, usually just amend the initial commit.
 
 ```bash
 git tag "v$version"
@@ -37,11 +38,13 @@ gh release create "v$version" $latest --notes-from-tag
 Using `rattler-build`:
 
 ```bash
-conda activate tomics-dev
 rattler-build build --recipe recipe.yml --output-dir ../r-tomics
 ```
 And then publishing on Anaconda:
 ```bash
-rattler-build upload anaconda $(ls ../r-tomics/noarch/r-tomics-$version-*.conda) --owner twillis209
 rattler-build upload anaconda $(ls ../r-tomics/linux-64/r-tomics-$version-*.conda) --owner twillis209
+```
+Or
+``` bash
+rattler-build upload anaconda $(ls ../r-tomics/osx-arm64/r-tomics-$version-*.conda) --owner twillis209
 ```
