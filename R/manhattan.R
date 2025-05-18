@@ -53,6 +53,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @param y_axis_break numeric vector containing coordinates at which to break the y-axis
 ##' @param y_limits limits for y axis
 ##' @param lead_snps data.table containing lead SNPs to annotate with gene names
+##' @param repel_args list containing arguments for ggrepel::geom_text_repel()
 ##' @author Daniel Roelfs
 ##' @author Tom Willis
 ##' @importFrom ggplot2 ggplot aes geom_hline geom_point scale_x_continuous
@@ -61,16 +62,21 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @importFrom ggrepel geom_text_repel
 ##' @importFrom ggtext element_markdown
 ##' @importFrom ggbreak scale_y_break
+##' @importFrom rlang exec
 ##' @export
 draw_manhattan <- function(processed_sumstats,
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
                            title = "", y_limits = c(1, 1e-10), y_axis_break = NULL,
                            lead_snps = NULL,
-                           gene_label_nudge_y = 0,
-                           gene_label_angle = 45,
-                           y_axis_space_mult = 0.3) {
-  chr <- bp_cum <- p <- gene <- NULL
-
+                           repel_args = list(
+                             hjust = -0.2,
+                             vjust = 0,
+                             size = 6,
+                             angle = 45,
+                             colour = "black",
+                             direction = "x",
+                             nudge_y = 0
+                           )) {
   if (!is.null(lead_snps)) {
     lead_snps <- data.table::copy(lead_snps)
     if (!all(c("chr", "bp", "p", "gene") %in% colnames(lead_snps))) {
@@ -108,19 +114,14 @@ draw_manhattan <- function(processed_sumstats,
     lead_snps[gwas_data, on = c("chr", "bp"), `:=`(p = i.p, bp_cum = i.bp_cum)]
 
     pl <- pl +
-      scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
+      ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
       ggplot2::coord_cartesian(clip = "off") +
       ggplot2::geom_point(size = 0.9, pch = 21, colour = "black", data = lead_snps) +
-      ggrepel::geom_text_repel(
-        ggplot2::aes(label = gene),
-        hjust = -0.2,
-        vjust = 0,
-        size = 6,
-        angle = 45,
-        colour = "black",
-        direction = "x",
-        nudge_y = gene_label_nudge_y,
-        data = lead_snps
+      rlang::exec(
+        ggrepel::geom_text_repel,
+        mapping = ggplot2::aes(label = .data$gene),
+        data = lead_snps,
+        !!!repel_args,
       )
   }
 
