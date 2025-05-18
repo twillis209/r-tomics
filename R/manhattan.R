@@ -52,17 +52,31 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @param title character string containing the title for the plot
 ##' @param y_axis_break numeric vector containing coordinates at which to break the y-axis
 ##' @param y_limits limits for y axis
+##' @param lead_snps data.table containing lead SNPs to annotate with gene names
 ##' @author Daniel Roelfs
 ##' @author Tom Willis
-##' @importFrom ggplot2 ggplot geom_hline geom_point scale_x_continuous
-##' scale_color_manual scale_size_continuous scale_y_continuous labs theme ggtitle
+##' @importFrom ggplot2 ggplot aes geom_hline geom_point scale_x_continuous
+##' scale_color_manual scale_size_continuous scale_y_continuous labs theme
+##' expansion
+##' @importFrom ggrepel geom_text_repel
 ##' @importFrom ggtext element_markdown
 ##' @importFrom ggbreak scale_y_break
 ##' @export
 draw_manhattan <- function(processed_sumstats,
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
-                           title = "", y_limits = c(1, 1e-10), y_axis_break = NULL) {
-  chr <- bp_cum <- p <- NULL
+                           title = "", y_limits = c(1, 1e-10), y_axis_break = NULL,
+                           lead_snps = NULL,
+                           gene_label_nudge_y = 0,
+                           gene_label_angle = 45,
+                           y_axis_space_mult = 0.3) {
+  chr <- bp_cum <- p <- gene <- NULL
+
+  if (!is.null(lead_snps)) {
+    lead_snps <- data.table::copy(lead_snps)
+    if (!all(c("chr", "bp", "p", "gene") %in% colnames(lead_snps))) {
+      stop("lead_snps must contain columns 'chr', 'bp', 'p', and 'gene'")
+    }
+  }
 
   gwas_data <- processed_sumstats$dat
   axis_set <- processed_sumstats$axis_set
@@ -88,6 +102,26 @@ draw_manhattan <- function(processed_sumstats,
 
   if (!is.null(y_axis_break)) {
     pl <- pl + ggbreak::scale_y_break(y_axis_break)
+  }
+
+  if (!is.null(lead_snps)) {
+    lead_snps[gwas_data, on = c("chr", "bp"), `:=`(p = i.p, bp_cum = i.bp_cum)]
+
+    pl <- pl +
+      scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
+      ggplot2::coord_cartesian(clip = "off") +
+      ggplot2::geom_point(size = 0.9, pch = 21, colour = "black", data = lead_snps) +
+      ggrepel::geom_text_repel(
+        ggplot2::aes(label = gene),
+        hjust = -0.2,
+        vjust = 0,
+        size = 6,
+        angle = 45,
+        colour = "black",
+        direction = "x",
+        nudge_y = gene_label_nudge_y,
+        data = lead_snps
+      )
   }
 
   pl
