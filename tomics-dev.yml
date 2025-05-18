@@ -16,3 +16,4 @@ dependencies:
 - r-ggtext
 - r-ggbreak
 - r-scales
+- r-ggrepel
