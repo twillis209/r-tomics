@@ -1,6 +1,6 @@
 Package: tomics
 Title: Useful functions for working with GWAS data
-Version: 0.3.0
+Version: 0.4.0
 Authors@R:
     person("Thomas", "Willis", , "tom.willis@live.com", role = c("aut", "cre"))
 Description: This package contains utility functions for working with GWAS
