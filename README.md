@@ -43,7 +43,10 @@ Using `rattler-build`:
 ```bash
 rattler-build build --recipe recipe.yml --output-dir ../r-tomics
 ```
-And then publishing on Anaconda:
+
+Should be able to cross-compile with `--target-platform linux-64` but I can't get this to work at the moment.
+
+Publishing on Anaconda:
 ```bash
 rattler-build upload anaconda $(ls ../r-tomics/linux-64/r-tomics-$version-*.conda) --owner twillis209
 ```
@@ -51,3 +54,5 @@ Or
 ``` bash
 rattler-build upload anaconda $(ls ../r-tomics/osx-arm64/r-tomics-$version-*.conda) --owner twillis209
 ```
+
+Should be 
