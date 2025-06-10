@@ -22,16 +22,17 @@ distance_clump <- function(dat, chr_col, bp_col, p_col, distance_window = 1e6, i
   data.table::setorderv(dat, p_col)
 
   # Loop through each chromosome
-  for (i in unique(dat$chr)) {
+  for (i in unique(dat[[chr_col]])) {
     j <- 1
 
     while (j <= dat[chr == i, .N, env = list(chr = chr_col)]) {
       # Get the position of the current SNP
-      bp <- dat[chr == i, env = list(chr = chr_col)][j, bp, env = list(bp = bp_col)]
+      pos <- dat[chr == i, env = list(chr = chr_col)][j, bp, env = list(bp = bp_col)]
 
       # Find and remove SNPs within the distance window
-      dat <- dat[!(chr == i & bp %between% c(bp - distance_window / 2, bp + distance_window / 2)),
-                 env = list(chr = chr_col, bp = bp_col)]
+      dat <- dat[!(chr == i & bp != pos & bp %between% c(max(pos - distance_window / 2, 0), pos + distance_window / 2)),
+        env = list(chr = chr_col, bp = bp_col)
+      ]
 
       # Move to the next SNP
       j <- j + 1
