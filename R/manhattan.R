@@ -68,7 +68,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @importFrom rlang exec sym
 ##' @export
 draw_manhattan <- function(processed_sumstats,
-                           p_col = "p",
+                           stat_col = "p",
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
                            title = "", y_limits = c(1, 1e-10), y_axis_break = NULL,
                            lead_snps = NULL,
@@ -81,17 +81,19 @@ draw_manhattan <- function(processed_sumstats,
                              direction = "x",
                              nudge_y = 0
                            )) {
+  chr <- bp <- bp_cum <- NULL
+
   if (!is.null(lead_snps)) {
     lead_snps <- data.table::copy(lead_snps)
-    if (!all(c("chr", "bp", "p", "gene") %in% colnames(lead_snps))) {
-      stop("lead_snps must contain columns 'chr', 'bp', 'p', and 'gene'")
+    if (!all(c("chr", "bp", stat_col, "gene") %in% colnames(lead_snps))) {
+      stop(sprintf("lead_snps must contain columns 'chr', 'bp', '%s', and 'gene'", stat_col))
     }
   }
 
   gwas_data <- processed_sumstats$dat
   axis_set <- processed_sumstats$axis_set
 
-  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = sym(p_col), color = as.factor(chr)), data = gwas_data) +
+  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = rlang::sym(stat_col), color = as.factor(chr)), data = gwas_data) +
     ggplot2::geom_point(size = 0.3) +
     ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
@@ -115,7 +117,7 @@ draw_manhattan <- function(processed_sumstats,
   }
 
   if (!is.null(lead_snps)) {
-    lead_snps[gwas_data, on = c("chr", "bp"), `:=`(p = i.p, bp_cum = i.bp_cum), env = list(p = p_col)]
+    lead_snps[gwas_data[, .(chr, bp, bp_cum)], on = c("chr", "bp")]
 
     pl <- pl +
       ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
