@@ -30,7 +30,7 @@ It's necessary to `commit` again after the earlier steps, usually just amend the
 
 ```bash
 git tag "v$version"
-git push origin <branch>
+git push origin "$(git branch --show-current)"
 git push -f origin "v$version"
 # --notes can be used to specify notes string
 gh release create "v$version" $latest --notes-from-tag
