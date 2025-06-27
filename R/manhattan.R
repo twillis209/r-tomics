@@ -93,7 +93,7 @@ draw_manhattan <- function(processed_sumstats,
   gwas_data <- processed_sumstats$dat
   axis_set <- processed_sumstats$axis_set
 
-  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = rlang::sym(stat_col), color = as.factor(chr)), data = gwas_data) +
+  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), data = gwas_data) +
     ggplot2::geom_point(size = 0.3) +
     ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
@@ -117,12 +117,12 @@ draw_manhattan <- function(processed_sumstats,
   }
 
   if (!is.null(lead_snps)) {
-    lead_snps[gwas_data[, .(chr, bp, bp_cum)], on = c("chr", "bp")]
+    merged_lead_snps <- merge(lead_snps, gwas_data[, .(chr, bp, bp_cum)], by = c("chr", "bp"))
 
     pl <- pl +
       ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
       ggplot2::coord_cartesian(clip = "off") +
-      ggplot2::geom_point(size = 0.9, pch = 21, colour = "black", data = lead_snps) +
+      ggplot2::geom_point(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), size = 0.9, pch = 21, colour = "black", data = lead_snps) +
       rlang::exec(
         ggrepel::geom_text_repel,
         mapping = ggplot2::aes(label = .data$gene),

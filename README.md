@@ -54,5 +54,3 @@ Or
 ``` bash
 rattler-build upload anaconda $(ls ../r-tomics/osx-arm64/r-tomics-$version-*.conda) --owner twillis209
 ```
-
-Should be 
