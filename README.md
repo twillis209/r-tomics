@@ -17,12 +17,14 @@ This R package is intended to house disparate functions I have found useful in p
   version=$(echo "$latest" | sed -E 's/tomics_(.*)\.tar\.gz/\1/')
   sha256=$(sha256sum "$latest" | awk '{print $1}')
   # Only want to change first version
-  # NB: double backspaces for group because this is the osx version
-  sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\\1version: $version/" recipe.yml
-  sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  # NB: Mac version needs explicit backup filename
+  sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
+  sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  git add .
+  git commit --amend --no-edit
 ```
 
-The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory. 
+The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
 
 At the moment it's still necessary to update the dependencies in `recipe.yml`, should be able to fix it by parsing the YAML.
 
@@ -30,7 +32,7 @@ It's necessary to `commit` again after the earlier steps, usually just amend the
 
 ```bash
 git tag "v$version"
-git push origin master
+git push origin "$(git branch --show-current)"
 git push -f origin "v$version"
 # --notes can be used to specify notes string
 gh release create "v$version" $latest --notes-from-tag
@@ -41,9 +43,14 @@ gh release create "v$version" $latest --notes-from-tag
 Using `rattler-build`:
 
 ```bash
-rattler-build build --recipe recipe.yml --output-dir ../r-tomics
+rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform osx-arm64
+# NB: Doesn't work on osx-arm64 because of an issue getting ggrepel dependency
+#rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform linux-64
 ```
-And then publishing on Anaconda:
+
+Should be able to cross-compile with `--target-platform linux-64` but I can't get this to work at the moment.
+
+Publishing on Anaconda:
 ```bash
 rattler-build upload anaconda $(ls ../r-tomics/linux-64/r-tomics-$version-*.conda) --owner twillis209
 ```
