@@ -121,8 +121,8 @@ draw_manhattan <- function(processed_sumstats,
 
     pl <- pl +
       ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
+      ggplot2::geom_point(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), size = 0.9, pch = 21, colour = "black", data = merged_lead_snps) +
       ggplot2::coord_cartesian(clip = "off") +
-      ggplot2::geom_point(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), size = 0.9, pch = 21, colour = "black", data = lead_snps) +
       rlang::exec(
         ggrepel::geom_text_repel,
         mapping = ggplot2::aes(label = .data$gene),
