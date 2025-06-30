@@ -20,6 +20,8 @@ This R package is intended to house disparate functions I have found useful in p
   # NB: Mac version needs explicit backup filename
   sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
   sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  git add .
+  git commit --amend --no-edit
 ```
 
 The YAML file defining the `tomics-dev` `conda` environment is located in the project's root directory.
@@ -41,7 +43,9 @@ gh release create "v$version" $latest --notes-from-tag
 Using `rattler-build`:
 
 ```bash
-rattler-build build --recipe recipe.yml --output-dir ../r-tomics
+rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform osx-arm64
+# NB: Doesn't work on osx-arm64 because of an issue getting ggrepel dependency
+#rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform linux-64
 ```
 
 Should be able to cross-compile with `--target-platform linux-64` but I can't get this to work at the moment.
