@@ -7,7 +7,8 @@ This R package is intended to house disparate functions I have found useful in p
 ```bash
   conda activate tomics-dev
   # Need to commit changes prior to this as otherwise usethis::use_version() will complain
-  R -e "usethis::use_version('minor')"
+  R -e "usethis::use_version('patch')"
+  #R -e "usethis::use_version('minor')"
   R -e "devtools::document()"
   # NB: updates dependencies etc.
   R -e "attachment::att_amend_desc()"
@@ -20,6 +21,7 @@ This R package is intended to house disparate functions I have found useful in p
   # NB: Mac version needs explicit backup filename
   sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
   sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+  # TODO list files changed above explicitly, git add . is bad
   git add .
   git commit --amend --no-edit
 ```
