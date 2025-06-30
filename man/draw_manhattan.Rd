@@ -20,6 +20,8 @@ draw_manhattan(
 \arguments{
 \item{processed_sumstats}{list containing data.table with updated chromosome and position values}
 
+\item{stat_col}{character string containing the column name for the test statistic to display}
+
 \item{palette}{character vector containing colors for chromosomes}
 
 \item{title}{character string containing the title for the plot}
@@ -31,8 +33,6 @@ draw_manhattan(
 \item{lead_snps}{data.table containing lead SNPs to annotate with gene names}
 
 \item{repel_args}{list containing arguments for ggrepel::geom_text_repel()}
-
-\item{p_col}{character string containing the column name for the p-value}
 }
 \description{
 Code originally from Daniel Roelfs, modified by Tom Willis

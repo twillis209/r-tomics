@@ -50,7 +50,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' https://danielroelfs.com/blog/how-i-create-manhattan-plots-using-ggplot/
 ##'
 ##' @param processed_sumstats list containing data.table with updated chromosome and position values
-##' @param p_col character string containing the column name for the p-value
+##' @param stat_col character string containing the column name for the test statistic to display
 ##' @param palette character vector containing colors for chromosomes
 ##' @param title character string containing the title for the plot
 ##' @param y_axis_break numeric vector containing coordinates at which to break the y-axis
@@ -126,7 +126,7 @@ draw_manhattan <- function(processed_sumstats,
       rlang::exec(
         ggrepel::geom_text_repel,
         mapping = ggplot2::aes(label = .data$gene),
-        data = lead_snps,
+        data = merged_lead_snps,
         !!!repel_args,
       )
   }
