@@ -7,8 +7,8 @@ This R package is intended to house disparate functions I have found useful in p
 ```bash
   conda activate tomics-dev
   # Need to commit changes prior to this as otherwise usethis::use_version() will complain
-  R -e "usethis::use_version('patch')"
-  #R -e "usethis::use_version('minor')"
+  #R -e "usethis::use_version('patch')"
+  R -e "usethis::use_version('minor')"
   R -e "devtools::document()"
   # NB: updates dependencies etc.
   R -e "attachment::att_amend_desc()"
