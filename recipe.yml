@@ -26,6 +26,7 @@ requirements:
   - r-magrittr
   - r-scales
   - r-ggrepel
+  - r-tibble
   run:
   - r-base
   - r-data.table (>= 1.15)
@@ -36,6 +37,7 @@ requirements:
   - r-magrittr
   - r-scales
   - r-ggrepel
+  - r-tibble
 tests:
 - script:
   - Rscript -e "library('tomics');"
@@ -43,6 +45,7 @@ tests:
   requirements:
     run:
     - r-testthat
+    - r-vdiffr
 about:
   homepage: https://github.com/twillis209/r-tomics
   summary: Useful functions for working with GWAS data.
