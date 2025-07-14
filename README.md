@@ -46,7 +46,7 @@ Using `rattler-build`:
 
 ```bash
 rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform osx-arm64
-# NB: Doesn't work on osx-arm64 because of an issue getting ggrepel dependency
+# NB: Doesn't work on osx-arm64 because of an issue getting ggrepel dependency, tried setting the latter to 0.9.6 but then I was missing the right version of glibc on mac
 #rattler-build build --recipe recipe.yml --output-dir ../r-tomics --target-platform linux-64
 ```
 
