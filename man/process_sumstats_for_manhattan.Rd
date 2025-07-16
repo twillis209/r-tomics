@@ -8,7 +8,7 @@ process_sumstats_for_manhattan(
   dat,
   chr_col = "chromosome",
   bp_col = "base_pair_location",
-  p_col = "p_value",
+  stat_cols = "p_value",
   chromosomes = as.character(1:23),
   inter_chr_offset = 5e+07
 )
@@ -20,7 +20,7 @@ process_sumstats_for_manhattan(
 
 \item{bp_col}{character string containing the column name for position}
 
-\item{p_col}{character string containing the column name for p-value}
+\item{stat_cols}{character vector containing the column name(s) for per-variant statistics such as p-values, chi-squared test statistics, etc.}
 
 \item{chromosomes}{character vector containing chromosomes to include in the plot}
 

@@ -6,7 +6,7 @@
 ##' @param dat data.table containing summary statistics
 ##' @param chr_col character string containing the column name for chromosome
 ##' @param bp_col character string containing the column name for position
-##' @param p_col character string containing the column name for p-value
+##' @param stat_cols character vector containing the column name(s) for per-variant statistics such as p-values, chi-squared test statistics, etc.
 ##' @param chromosomes character vector containing chromosomes to include in the plot
 ##' @param inter_chr_offset size of gap between chromosomes
 ##' @return list containing data.table with updated chromosome and position
@@ -15,12 +15,12 @@
 ##' @author Tom Willis
 ##' @import data.table
 ##' @export
-process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", p_col = "p_value", chromosomes = as.character(1:23), inter_chr_offset = 5e7) {
+process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col = "base_pair_location", stat_cols = "p_value", chromosomes = as.character(1:23), inter_chr_offset = 5e7) {
   chr <- bp <- max_bp <- bp_add <- i.bp_add <- bp_cum <- inter_chr <- NULL
 
   dat <- data.table::copy(dat)
 
-  data.table::setnames(dat, c(chr_col, bp_col, p_col), c("chr", "bp", "p"))
+  data.table::setnames(dat, c(chr_col, bp_col), c("chr", "bp"))
 
   dat <- dat[chr %in% chromosomes]
 
@@ -39,7 +39,9 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 
   axis_set <- dat[, .(center = mean(bp_cum)), by = chr]
 
-  return(list(dat = dat, axis_set = axis_set))
+  cols_to_keep <- c("chr", "bp", "bp_cum", stat_cols)
+
+  return(list(dat = dat[, ..cols_to_keep], axis_set = axis_set))
 }
 
 ##' Draw Manhattan plot using processed summary statistics
@@ -48,6 +50,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' https://danielroelfs.com/blog/how-i-create-manhattan-plots-using-ggplot/
 ##'
 ##' @param processed_sumstats list containing data.table with updated chromosome and position values
+##' @param stat_col character string containing the column name for the test statistic to display
 ##' @param palette character vector containing colors for chromosomes
 ##' @param title character string containing the title for the plot
 ##' @param y_axis_break numeric vector containing coordinates at which to break the y-axis
@@ -62,9 +65,10 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @importFrom ggrepel geom_text_repel
 ##' @importFrom ggtext element_markdown
 ##' @importFrom ggbreak scale_y_break
-##' @importFrom rlang exec
+##' @importFrom rlang exec sym
 ##' @export
 draw_manhattan <- function(processed_sumstats,
+                           stat_col = "p",
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
                            title = "", y_limits = c(1, 1e-10), y_axis_break = NULL,
                            lead_snps = NULL,
@@ -77,17 +81,19 @@ draw_manhattan <- function(processed_sumstats,
                              direction = "x",
                              nudge_y = 0
                            )) {
+  chr <- bp <- bp_cum <- NULL
+
   if (!is.null(lead_snps)) {
     lead_snps <- data.table::copy(lead_snps)
-    if (!all(c("chr", "bp", "p", "gene") %in% colnames(lead_snps))) {
-      stop("lead_snps must contain columns 'chr', 'bp', 'p', and 'gene'")
+    if (!all(c("chr", "bp", stat_col, "gene") %in% colnames(lead_snps))) {
+      stop(sprintf("lead_snps must contain columns 'chr', 'bp', '%s', and 'gene'", stat_col))
     }
   }
 
   gwas_data <- processed_sumstats$dat
   axis_set <- processed_sumstats$axis_set
 
-  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = p, color = as.factor(chr)), data = gwas_data) +
+  pl <- ggplot2::ggplot(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), data = gwas_data) +
     ggplot2::geom_point(size = 0.3) +
     ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
@@ -111,16 +117,16 @@ draw_manhattan <- function(processed_sumstats,
   }
 
   if (!is.null(lead_snps)) {
-    lead_snps[gwas_data, on = c("chr", "bp"), `:=`(p = i.p, bp_cum = i.bp_cum)]
+    merged_lead_snps <- merge(lead_snps, gwas_data[, .(chr, bp, bp_cum)], by = c("chr", "bp"))
 
     pl <- pl +
       ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
+      ggplot2::geom_point(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), size = 0.9, pch = 21, colour = "black", data = merged_lead_snps) +
       ggplot2::coord_cartesian(clip = "off") +
-      ggplot2::geom_point(size = 0.9, pch = 21, colour = "black", data = lead_snps) +
       rlang::exec(
         ggrepel::geom_text_repel,
         mapping = ggplot2::aes(label = .data$gene),
-        data = lead_snps,
+        data = merged_lead_snps,
         !!!repel_args,
       )
   }
