@@ -1,5 +1,5 @@
 context:
-  version: 0.3.0
+  version: 0.7.0
   r_version: 4.3
 package:
   name: r-tomics
@@ -7,7 +7,7 @@ package:
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: 0a918a87005298f27e387fe987176aacd824cdec0a747c7012137ad01fde12f7
+  sha256: 24758cb330edff11fa0183a950ea3aa4f39a1eff16526a1f4d8ce1c00c8ceec0
 build:
   script:
     - if: unix
@@ -26,6 +26,7 @@ requirements:
   - r-magrittr
   - r-scales
   - r-ggrepel
+  - r-tibble
   run:
   - r-base
   - r-data.table (>= 1.15)
@@ -36,6 +37,7 @@ requirements:
   - r-magrittr
   - r-scales
   - r-ggrepel
+  - r-tibble
 tests:
 - script:
   - Rscript -e "library('tomics');"
@@ -43,6 +45,7 @@ tests:
   requirements:
     run:
     - r-testthat
+    - r-vdiffr
 about:
   homepage: https://github.com/twillis209/r-tomics
   summary: Useful functions for working with GWAS data.

@@ -1,6 +1,6 @@
 Package: tomics
-Title: Useful functions for working with GWAS data
-Version: 0.3.0
+Title: Functions for working with GWAS data
+Version: 0.7.0
 Authors@R:
     person("Thomas", "Willis", , "tom.willis@live.com", role = c("aut", "cre"))
 Description: This package contains utility functions for working with GWAS
@@ -9,6 +9,7 @@ Description: This package contains utility functions for working with GWAS
 License: MIT + file LICENSE
 Imports:
     data.table (>= 1.15),
+    dplyr,
     ggbreak,
     ggplot2,
     ggrepel,
@@ -16,9 +17,11 @@ Imports:
     magrittr,
     rlang,
     scales,
-    stats
+    stats,
+    tibble
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    vdiffr
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

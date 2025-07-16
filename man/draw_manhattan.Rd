@@ -6,6 +6,7 @@
 \usage{
 draw_manhattan(
   processed_sumstats,
+  stat_col = "p",
   palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
     "#CC79A7"),
   title = "",
@@ -18,6 +19,8 @@ draw_manhattan(
 }
 \arguments{
 \item{processed_sumstats}{list containing data.table with updated chromosome and position values}
+
+\item{stat_col}{character string containing the column name for the test statistic to display}
 
 \item{palette}{character vector containing colors for chromosomes}
 
