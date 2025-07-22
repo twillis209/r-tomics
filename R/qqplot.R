@@ -2,14 +2,15 @@
 ##' @description Draws a Q-Q plot of p-values from a data.frame.
 ##' @param daf data.frame containing p-values.
 ##' @param p_col p-value column label
+##' @param geom character string specifying the type of geom to use for the Q-Q plot (default is "line")
 ##' @return ggplot object
 ##' @importFrom ggplot2 ggplot aes geom_abline labs coord_fixed stat_qq
 ##' @importFrom ggtext element_markdown
 ##' @importFrom stats qunif
 ##' @export
-qqplot <- function(daf, p_col) {
+qqplot <- function(daf, p_col, geom = "line") {
   ggplot2::ggplot(data = daf) +
-    ggplot2::stat_qq(ggplot2::aes(sample = !!rlang::sym(p_col)), geom = "line", distribution = stats::qunif) +
+    ggplot2::stat_qq(ggplot2::aes(sample = !!rlang::sym(p_col)), geom = geom, distribution = stats::qunif) +
     ggplot2::geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
     scale_x_neglog10() +
     scale_y_neglog10() +
@@ -31,6 +32,7 @@ qqplot <- function(daf, p_col) {
 #' @param p_col p-value column label for primary variable
 #' @param q_col p-value column label for secondary variable for stratification
 #' @param breaks numeric vector of breaks for stratification
+#' @param geom character string specifying the type of geom to use for the Q-Q plot (default is "line")
 #' @return ggplot object
 #' @importFrom ggplot2 ggplot aes geom_abline labs coord_fixed stat_qq
 #' @importFrom stats qunif quantile
@@ -38,7 +40,7 @@ qqplot <- function(daf, p_col) {
 #' @importFrom stats qunif
 #' @importFrom dplyr mutate select
 #' @export
-stratified_qqplot <- function(daf, p_col, q_col, breaks = c(0, 10^(c(-5:-1, 0)))) {
+stratified_qqplot <- function(daf, p_col, q_col, breaks = c(0, 10^(c(-5:-1, 0))), geom = "line") {
   tibble::as_tibble(daf) %>%
     dplyr::mutate(
       qbreaks = list(stats::quantile(!!rlang::sym(q_col), probs = breaks, na.rm = TRUE)),
@@ -50,7 +52,7 @@ stratified_qqplot <- function(daf, p_col, q_col, breaks = c(0, 10^(c(-5:-1, 0)))
     ) %>%
     dplyr::select(-qbreaks) %>%
     ggplot2::ggplot() +
-    ggplot2::stat_qq(ggplot2::aes(sample = !!rlang::sym(p_col), col = Q), geom = "line", distribution = stats::qunif) +
+    ggplot2::stat_qq(ggplot2::aes(sample = !!rlang::sym(p_col), col = Q), geom = geom, distribution = stats::qunif) +
     ggplot2::geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
     scale_x_neglog10() +
     scale_y_neglog10() +

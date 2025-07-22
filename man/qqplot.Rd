@@ -4,12 +4,14 @@
 \alias{qqplot}
 \title{Draw Q-Q plot.}
 \usage{
-qqplot(daf, p_col)
+qqplot(daf, p_col, geom = "line")
 }
 \arguments{
 \item{daf}{data.frame containing p-values.}
 
 \item{p_col}{p-value column label}
+
+\item{geom}{character string specifying the type of geom to use for the Q-Q plot (default is "line")}
 }
 \value{
 ggplot object

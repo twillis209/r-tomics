@@ -22,7 +22,7 @@ This R package is intended to house disparate functions I have found useful in p
   sed -i '' -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
   sed -i '' -E "s/sha256: .*/sha256: $sha256/" recipe.yml
   # TODO list files changed above explicitly, git add . is bad
-  git add .
+  git add man DESCRIPTION NAMESPACE recipe.yml
   git commit --amend --no-edit
 ```
 
@@ -60,3 +60,10 @@ Or
 ``` bash
 rattler-build upload anaconda $(ls ../r-tomics/osx-arm64/r-tomics-$version-*.conda) --owner twillis209
 ```
+
+# Adding `vdiffr` tests
+
+Upon adding a new `vdiffr::expect_doppelganger` tests case:
+* run `devtools::test()`
+* if new, review new snapshots under `tests/testthat/_snaps`
+* if a regression is detected, run `testthat::snapshot_review()` to review changes

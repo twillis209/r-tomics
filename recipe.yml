@@ -1,5 +1,5 @@
 context:
-  version: 0.7.0
+  version: 0.8.0
   r_version: 4.3
 package:
   name: r-tomics
@@ -7,7 +7,7 @@ package:
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: 24758cb330edff11fa0183a950ea3aa4f39a1eff16526a1f4d8ce1c00c8ceec0
+  sha256: 0ef05ec0a54e7b28a96dad03c809b9f5ebdf6b7ddf0a20f933c1e994f99c9ad8
 build:
   script:
     - if: unix

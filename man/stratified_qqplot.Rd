@@ -4,7 +4,13 @@
 \alias{stratified_qqplot}
 \title{Draw stratified Q-Q plot.}
 \usage{
-stratified_qqplot(daf, p_col, q_col, breaks = c(0, 10^(c(-5:-1, 0))))
+stratified_qqplot(
+  daf,
+  p_col,
+  q_col,
+  breaks = c(0, 10^(c(-5:-1, 0))),
+  geom = "line"
+)
 }
 \arguments{
 \item{daf}{data.frame containing p-values for primary and secondary variables.}
@@ -14,6 +20,8 @@ stratified_qqplot(daf, p_col, q_col, breaks = c(0, 10^(c(-5:-1, 0))))
 \item{q_col}{p-value column label for secondary variable for stratification}
 
 \item{breaks}{numeric vector of breaks for stratification}
+
+\item{geom}{character string specifying the type of geom to use for the Q-Q plot (default is "line")}
 }
 \value{
 ggplot object
