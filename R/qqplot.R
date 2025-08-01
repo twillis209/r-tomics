@@ -1,16 +1,22 @@
 ##' Draw Q-Q plot.
 ##' @description Draws a Q-Q plot of p-values from a data.frame.
 ##' @param daf data.frame containing p-values.
-##' @param p_col p-value column label
+##' @param p_cols p-value column names
+##' @param p_col_labels p-value column labels to apply to the plot legend
 ##' @param geom character string specifying the type of geom to use for the Q-Q plot (default is "line")
 ##' @return ggplot object
 ##' @importFrom ggplot2 ggplot aes geom_abline labs coord_fixed stat_qq
 ##' @importFrom ggtext element_markdown
 ##' @importFrom stats qunif
+##' @importFrom tidyr pivot_longer
+##' @importFrom tidyselect all_of
+##' @importFrom dplyr mutate
 ##' @export
-qqplot <- function(daf, p_col, geom = "line") {
-  ggplot2::ggplot(data = daf) +
-    ggplot2::stat_qq(ggplot2::aes(sample = !!rlang::sym(p_col)), geom = geom, distribution = stats::qunif) +
+qqplot <- function(daf, p_cols, p_col_labels, geom = "line") {
+  tidyr::pivot_longer(daf, cols = tidyselect::all_of(p_cols), names_to = "Statistic", values_to = "value") %>%
+    dplyr::mutate(Statistic = factor(Statistic, levels = p_cols, labels = p_col_labels)) %>%
+  ggplot2::ggplot() +
+    ggplot2::stat_qq(ggplot2::aes(sample = value, col = Statistic), geom = geom, distribution = stats::qunif) +
     ggplot2::geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
     scale_x_neglog10() +
     scale_y_neglog10() +
