@@ -27,6 +27,8 @@ requirements:
   - r-scales
   - r-ggrepel
   - r-tibble
+  - r-tidyr
+  - r-tidyselect
   run:
   - r-base
   - r-data.table (>= 1.15)
@@ -38,6 +40,8 @@ requirements:
   - r-scales
   - r-ggrepel
   - r-tibble
+  - r-tidyr
+  - r-tidyselect
 tests:
 - script:
   - Rscript -e "library('tomics');"
