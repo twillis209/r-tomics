@@ -8,6 +8,8 @@ dependencies:
 - r-data.table >= 1.17
 - r-magrittr
 - r-dplyr
+- r-tidyr
+- r-tidyselect
 - r-stringr
 - r-r.utils
 - r-devtools

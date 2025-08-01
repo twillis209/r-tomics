@@ -1,6 +1,6 @@
 Package: tomics
 Title: Functions for working with GWAS data
-Version: 0.8.0
+Version: 0.9.0
 Authors@R:
     person("Thomas", "Willis", , "tom.willis@live.com", role = c("aut", "cre"))
 Description: This package contains utility functions for working with GWAS
@@ -18,7 +18,9 @@ Imports:
     rlang,
     scales,
     stats,
-    tibble
+    tibble,
+    tidyr,
+    tidyselect
 Suggests:
     testthat (>= 3.0.0),
     vdiffr

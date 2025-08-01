@@ -7,7 +7,8 @@ test_that("qqplot matches expected output visually", {
         SNP = paste0("rs", 1:100),
         P = runif(100, 0, 1)
       ),
-      p_col = "P"
+      p_cols = "P",
+      p_col_labels = "p-value"
     )
   )
 })
@@ -21,7 +22,8 @@ test_that("qqplot matches expected output visually with geom_point", {
         SNP = paste0("rs", 1:100),
         P = runif(100, 0, 1)
       ),
-      p_col = "P",
+      p_cols = "P",
+      p_col_labels = "p-value",
       geom = "point"
     )
   )
