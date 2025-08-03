@@ -67,3 +67,9 @@ Upon adding a new `vdiffr::expect_doppelganger` tests case:
 * run `devtools::test()`
 * if new, review new snapshots under `tests/testthat/_snaps`
 * if a regression is detected, run `testthat::snapshot_review()` to review changes
+
+# TODO Update `recipe.yml`
+
+I use `attachments` to update `DESCRIPTION` with new packages, but I should do the same to update `recipe.yml`.
+
+
