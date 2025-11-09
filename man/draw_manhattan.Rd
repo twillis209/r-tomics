@@ -11,7 +11,7 @@ draw_manhattan(
     "#CC79A7"),
   title = "",
   y_limits = c(1, 1e-10),
-  y_axis_break = NULL,
+  y_axis_breaks = NULL,
   lead_snps = NULL,
   repel_args = list(hjust = -0.2, vjust = 0, size = 6, angle = 45, colour = "black",
     direction = "x", nudge_y = 0)
@@ -28,7 +28,7 @@ draw_manhattan(
 
 \item{y_limits}{limits for y axis}
 
-\item{y_axis_break}{numeric vector containing coordinates at which to break the y-axis}
+\item{y_axis_breaks}{numeric vector containing coordinates at which to place breaks on the y-axis}
 
 \item{lead_snps}{data.table containing lead SNPs to annotate with gene names}
 
