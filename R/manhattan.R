@@ -53,8 +53,8 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 ##' @param stat_col character string containing the column name for the test statistic to display
 ##' @param palette character vector containing colors for chromosomes
 ##' @param title character string containing the title for the plot
-##' @param y_axis_break numeric vector containing coordinates at which to break the y-axis
 ##' @param y_limits limits for y axis
+##' @param y_axis_breaks numeric vector containing coordinates at which to place breaks on the y-axis
 ##' @param lead_snps data.table containing lead SNPs to annotate with gene names
 ##' @param repel_args list containing arguments for ggrepel::geom_text_repel()
 ##' @author Daniel Roelfs
@@ -70,7 +70,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 draw_manhattan <- function(processed_sumstats,
                            stat_col = "p",
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
-                           title = "", y_limits = c(1, 1e-10), y_axis_break = NULL,
+                           title = "", y_limits = c(1, 1e-10), y_axis_breaks = NULL,
                            lead_snps = NULL,
                            repel_args = list(
                              hjust = -0.2,
@@ -98,7 +98,7 @@ draw_manhattan <- function(processed_sumstats,
     ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
     ggplot2::scale_size_continuous(range = c(0.5, 3)) +
-    scale_y_neglog10(limits = y_limits) +
+    scale_y_neglog10(limits = y_limits, breaks = y_axis_breaks) +
     ggplot2::labs(
       x = NULL,
       y = "-log<sub>10</sub>(p)"
@@ -112,9 +112,7 @@ draw_manhattan <- function(processed_sumstats,
     ) +
     ggplot2::ggtitle(title)
 
-  if (!is.null(y_axis_break)) {
-    pl <- pl + ggbreak::scale_y_break(y_axis_break)
-  }
+
 
   if (!is.null(lead_snps)) {
     merged_lead_snps <- merge(lead_snps, gwas_data[, .(chr, bp, bp_cum)], by = c("chr", "bp"))
@@ -179,16 +177,16 @@ scale_x_neglog10 <- function(...) {
 ##' @importFrom scales trans_breaks trans_format math_format
 ##' @importFrom ggplot2 scale_y_continuous
 ##' @export
-scale_y_neglog10 <- function(...) {
+scale_y_neglog10 <- function(..., breaks = scales::trans_breaks(function(x) {
+  log10(x) * -1
+}, function(x) {
+  10^(-1 * x)
+})) {
   .x <- NULL
 
   ggplot2::scale_y_continuous(...,
     trans = neglog_trans(base = 10),
-    breaks = scales::trans_breaks(function(x) {
-      log10(x) * -1
-    }, function(x) {
-      10^(-1 * x)
-    }),
+    breaks = breaks,
     labels = scales::trans_format(function(x) {
       log10(x) * -1
     }, scales::math_format(.x))
