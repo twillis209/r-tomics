@@ -4,7 +4,15 @@
 \alias{scale_y_neglog10}
 \title{-log10 transformation of the y-axis}
 \usage{
-scale_y_neglog10(...)
+scale_y_neglog10(
+  ...,
+  breaks = scales::trans_breaks(function(x) {
+     log10(x) * -1
+ }, function(x) {
+    
+    10^(-1 * x)
+ })
+)
 }
 \arguments{
 \item{...}{additional arguments passed to \code{\link[ggplot2:scale_continuous]{ggplot2::scale_y_continuous()}}}
