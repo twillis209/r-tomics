@@ -192,3 +192,237 @@ scale_y_neglog10 <- function(..., breaks = scales::trans_breaks(function(x) {
     }, scales::math_format(.x))
   )
 }
+
+##' Draw interactive plotly Manhattan plot for GWAS data
+##'
+##' Creates an interactive Manhattan plot using plotly that allows zooming and
+##' panning to explore GWAS association signals. Includes optional p-value
+##' filtering to improve performance with large datasets.
+##'
+##' @param dat data.table containing summary statistics with columns for
+##'   chromosome, position, p-value, and optionally SNP ID
+##' @param chr_col character string containing the column name for chromosome
+##' @param bp_col character string containing the column name for position
+##' @param p_col character string containing the column name for p-value
+##' @param snp_col character string containing the column name for SNP ID (optional)
+##' @param chromosomes character vector containing chromosomes to include in the plot
+##' @param region_chr character string specifying a single chromosome to plot (optional).
+##'   If provided with region_start and region_end, only this region will be plotted.
+##' @param region_start numeric start position in base pairs for region to plot (optional)
+##' @param region_end numeric end position in base pairs for region to plot (optional)
+##' @param p_threshold numeric p-value threshold for filtering SNPs (default 1,
+##'   no filtering). SNPs with p > p_threshold are excluded to improve performance.
+##' @param palette character vector containing colors for chromosomes
+##' @param title character string containing the title for the plot
+##' @param genome_wide_line numeric p-value for genome-wide significance line
+##'   (default 5e-8)
+##' @param suggestive_line numeric p-value for suggestive significance line
+##'   (default 1e-5)
+##' @param point_size numeric size of points (default 3)
+##' @return plotly object with interactive Manhattan plot
+##' @author Tom Willis
+##' @examples
+##' \dontrun{
+##' library(data.table)
+##' 
+##' # Create example GWAS data
+##' gwas_data <- data.table(
+##'   chromosome = rep(1:22, each = 10000),
+##'   base_pair_location = rep(1:10000, 22) * 1000,
+##'   p_value = runif(220000, 0, 1),
+##'   snp_id = paste0("rs", 1:220000)
+##' )
+##' 
+##' # Basic interactive Manhattan plot
+##' fig <- draw_plotly_manhattan(
+##'   dat = gwas_data,
+##'   chr_col = "chromosome",
+##'   bp_col = "base_pair_location",
+##'   p_col = "p_value",
+##'   title = "My GWAS Study"
+##' )
+##' fig
+##' 
+##' # With p-value filtering for better performance (only show p < 0.01)
+##' fig <- draw_plotly_manhattan(
+##'   dat = gwas_data,
+##'   chr_col = "chromosome",
+##'   bp_col = "base_pair_location",
+##'   p_col = "p_value",
+##'   snp_col = "snp_id",
+##'   p_threshold = 0.01,
+##'   title = "Filtered Manhattan Plot"
+##' )
+##' fig
+##' 
+##' # Customize colors and significance lines
+##' fig <- draw_plotly_manhattan(
+##'   dat = gwas_data,
+##'   p_threshold = 0.001,
+##'   palette = c("#1f77b4", "#ff7f0e"),
+##'   genome_wide_line = 5e-8,
+##'   suggestive_line = 1e-5,
+##'   point_size = 4
+##' )
+##' fig
+##' 
+##' # Plot a specific region (e.g., chromosome 6, 25-35 Mb)
+##' fig <- draw_plotly_manhattan(
+##'   dat = gwas_data,
+##'   region_chr = "6",
+##'   region_start = 25000000,
+##'   region_end = 35000000,
+##'   title = "Chromosome 6: 25-35 Mb"
+##' )
+##' fig
+##' }
+##' @export
+draw_plotly_manhattan <- function(dat,
+                                  chr_col = "chromosome",
+                                  bp_col = "base_pair_location",
+                                  p_col = "p_value",
+                                  snp_col = NULL,
+                                  chromosomes = as.character(1:22),
+                                  region_chr = NULL,
+                                  region_start = NULL,
+                                  region_end = NULL,
+                                  p_threshold = 1,
+                                  palette = c("#E69F00", "#56B4E9"),
+                                  title = "Manhattan Plot",
+                                  genome_wide_line = 5e-8,
+                                  suggestive_line = 1e-5,
+                                  point_size = 3) {
+  
+  if (!requireNamespace("plotly", quietly = TRUE)) {
+    stop("Package 'plotly' is required for this function. Please install it with: install.packages('plotly')")
+  }
+  
+  chr <- bp <- p_value <- neglog_p <- bp_cum <- color_group <- NULL
+  
+  dat <- data.table::copy(dat)
+  
+  data.table::setnames(dat, c(chr_col, bp_col, p_col), c("chr", "bp", "p_value"))
+  
+  if (!is.null(region_chr)) {
+    dat <- dat[chr == region_chr]
+    if (!is.null(region_start)) {
+      dat <- dat[bp >= region_start]
+    }
+    if (!is.null(region_end)) {
+      dat <- dat[bp <= region_end]
+    }
+    chromosomes <- region_chr
+  } else {
+    dat <- dat[chr %in% chromosomes]
+  }
+  
+  if (p_threshold < 1) {
+    dat <- dat[p_value <= p_threshold]
+  }
+  
+  dat[, chr := as.integer(chr)]
+  data.table::setorder(dat, chr, bp)
+  
+  dat[, neglog_p := -log10(p_value)]
+  
+  if (!is.null(region_chr)) {
+    dat[, bp_cum := bp]
+    axis_set <- data.table::data.table(center = mean(dat$bp), chr = unique(dat$chr))
+  } else {
+    bp_offsets <- dat[, .(max_bp = max(bp)), by = chr]
+    bp_offsets[, bp_add := cumsum(as.numeric(data.table::shift(max_bp, n = 1, fill = 0, type = "lag")))]
+    
+    dat[bp_offsets, on = "chr", bp_cum := bp + i.bp_add]
+    
+    axis_set <- dat[, .(center = mean(bp_cum), chr = unique(chr)), by = chr]
+  }
+  
+  dat[, color_group := (chr %% 2) + 1]
+  
+  hover_text <- if (!is.null(snp_col) && snp_col %in% names(dat)) {
+    sprintf("SNP: %s<br>Chr: %s<br>Pos: %s<br>P-value: %.2e",
+            dat[[snp_col]], dat$chr, dat$bp, dat$p_value)
+  } else {
+    sprintf("Chr: %s<br>Pos: %s<br>P-value: %.2e",
+            dat$chr, dat$bp, dat$p_value)
+  }
+  
+  fig <- plotly::plot_ly()
+  
+  for (grp in unique(dat$color_group)) {
+    dat_subset <- dat[color_group == grp]
+    fig <- plotly::add_trace(
+      fig,
+      data = dat_subset,
+      x = ~bp_cum,
+      y = ~neglog_p,
+      type = "scatter",
+      mode = "markers",
+      marker = list(
+        size = point_size,
+        color = palette[grp],
+        opacity = 0.7
+      ),
+      text = hover_text[dat$color_group == grp],
+      hovertemplate = "%{text}<extra></extra>",
+      showlegend = FALSE
+    )
+  }
+  
+  if (!is.null(genome_wide_line) && genome_wide_line > 0) {
+    fig <- plotly::add_trace(
+      fig,
+      x = c(min(dat$bp_cum), max(dat$bp_cum)),
+      y = c(-log10(genome_wide_line), -log10(genome_wide_line)),
+      type = "scatter",
+      mode = "lines",
+      line = list(color = "red", dash = "dash", width = 1),
+      name = sprintf("Genome-wide (p=%.0e)", genome_wide_line),
+      hoverinfo = "name",
+      showlegend = TRUE
+    )
+  }
+  
+  if (!is.null(suggestive_line) && suggestive_line > 0) {
+    fig <- plotly::add_trace(
+      fig,
+      x = c(min(dat$bp_cum), max(dat$bp_cum)),
+      y = c(-log10(suggestive_line), -log10(suggestive_line)),
+      type = "scatter",
+      mode = "lines",
+      line = list(color = "blue", dash = "dash", width = 1),
+      name = sprintf("Suggestive (p=%.0e)", suggestive_line),
+      hoverinfo = "name",
+      showlegend = TRUE
+    )
+  }
+  
+  xaxis_config <- if (!is.null(region_chr)) {
+    list(
+      title = "Position (bp)",
+      zeroline = FALSE
+    )
+  } else {
+    list(
+      title = "Chromosome",
+      tickmode = "array",
+      tickvals = axis_set$center,
+      ticktext = axis_set$chr,
+      zeroline = FALSE
+    )
+  }
+  
+  fig <- plotly::layout(
+    fig,
+    title = title,
+    xaxis = xaxis_config,
+    yaxis = list(
+      title = "-log<sub>10</sub>(P-value)",
+      zeroline = FALSE
+    ),
+    hovermode = "closest",
+    dragmode = "zoom"
+  )
+  
+  return(fig)
+}

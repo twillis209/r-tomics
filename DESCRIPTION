@@ -22,6 +22,7 @@ Imports:
     tidyr,
     tidyselect
 Suggests:
+    plotly,
     testthat (>= 3.0.0),
     vdiffr
 Config/testthat/edition: 3
