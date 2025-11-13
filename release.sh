@@ -56,22 +56,29 @@ R -e "attachment::att_amend_desc()"
 echo "Building package..."
 R CMD build .
 
-latest=$(ls -v tomics_*.tar.gz | tail -n 1)
+latest=$(ls -t tomics_*.tar.gz | head -n 1)
 echo "Latest build: $latest"
 
 echo "Running R CMD check..."
 R CMD check $latest --no-manual --no-build-vignettes
 
-version=$(echo "$latest" | sed -E 's/tomics_(.*)\.tar\.gz/\1/')
-sha256=$(sha256sum "$latest" | awk '{print $1}')
+# Extract version from filename (platform-independent)
+version=$(echo "$latest" | sed 's/tomics_\(.*\)\.tar\.gz/\1/')
+
+# Compute SHA256 (works on both Linux and macOS)
+if command -v sha256sum > /dev/null 2>&1; then
+    sha256=$(sha256sum "$latest" | awk '{print $1}')
+else
+    sha256=$(shasum -a 256 "$latest" | awk '{print $1}')
+fi
 
 echo "Version: $version"
 echo "SHA256: $sha256"
 
 echo "Updating recipe.yml..."
-# Linux version of sed (no need for backup file argument)
-sed -i -E "s/^([[:space:]]*)version: [0-9]+\.[0-9]+\.[0-9]+/\1version: $version/" recipe.yml
-sed -i -E "s/sha256: .*/sha256: $sha256/" recipe.yml
+# Platform-independent sed (use perl instead)
+perl -i -pe "s/^(\\s*)version: [0-9]+\\.[0-9]+\\.[0-9]+/\${1}version: $version/" recipe.yml
+perl -i -pe "s/sha256: .*/sha256: $sha256/" recipe.yml
 
 echo "Staging changes for commit..."
 git add man DESCRIPTION NAMESPACE recipe.yml

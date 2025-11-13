@@ -3,6 +3,7 @@
 export("%>%")
 export(distance_clump)
 export(draw_manhattan)
+export(draw_plotly_manhattan)
 export(process_sumstats_for_manhattan)
 export(qqplot)
 export(scale_x_neglog10)
