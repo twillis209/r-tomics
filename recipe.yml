@@ -1,5 +1,5 @@
 context:
-  version: 0.11.0
+  version: 0.11.1
   r_version: 4.3
 package:
   name: r-tomics
@@ -7,7 +7,7 @@ package:
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: df0f460b209fc1eece8f76942f50625e36863e1a28c67fe25ba4fd92e0a0e30c
+  sha256: 1e6c92cba69c4cfc5b16a50aa1f8524fe024391f33b12df6c5228c1a76db4499
 build:
   script:
     - if: unix
@@ -17,15 +17,17 @@ build:
         - R CMD INSTALL --build .
 requirements:
   host:
-  - r-base >= ${{ r_version }}
+  - r-base >= {{ r_version }}
   - r-data.table (>= 1.15)
   - r-dplyr
-  - r-ggplot2
-  - r-ggtext
   - r-ggbreak
-  - r-magrittr
-  - r-scales
+  - r-ggplot2
   - r-ggrepel
+  - r-ggtext
+  - r-magrittr
+  - r-plotly
+  - r-rlang
+  - r-scales
   - r-tibble
   - r-tidyr
   - r-tidyselect
@@ -33,12 +35,14 @@ requirements:
   - r-base
   - r-data.table (>= 1.15)
   - r-dplyr
-  - r-ggplot2
-  - r-ggtext
   - r-ggbreak
-  - r-magrittr
-  - r-scales
+  - r-ggplot2
   - r-ggrepel
+  - r-ggtext
+  - r-magrittr
+  - r-plotly
+  - r-rlang
+  - r-scales
   - r-tibble
   - r-tidyr
   - r-tidyselect
@@ -48,7 +52,7 @@ tests:
   - Rscript -e "library(tomics); testthat::test_package('tomics')"
   requirements:
     run:
-    - r-testthat
+    - r-testthat (>= 3.0.0)
     - r-vdiffr
 about:
   homepage: https://github.com/twillis209/r-tomics
