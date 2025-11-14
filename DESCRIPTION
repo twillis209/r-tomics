@@ -1,6 +1,6 @@
 Package: tomics
 Title: Functions for working with GWAS data
-Version: 0.11.3
+Version: 0.12.0
 Authors@R:
     person("Thomas", "Willis", , "tom.willis@live.com", role = c("aut", "cre"))
 Description: This package contains utility functions for working with GWAS
@@ -14,6 +14,7 @@ Imports:
     ggplot2,
     ggrepel,
     ggtext,
+    htmlwidgets,
     magrittr,
     plotly,
     rlang,
@@ -28,4 +29,4 @@ Suggests:
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

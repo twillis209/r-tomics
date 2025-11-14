@@ -1,13 +1,12 @@
 context:
-  version: 0.11.3
-  r_version: 4.3
+  version: 0.12.0
 package:
   name: r-tomics
   version: ${{ version }}
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: 5707fd516169ee7b1699dff2af9a63772a23afeb1afb2cc7f25c280563a4d634
+  sha256: b3cdb8fbb0d072e8d081dfd87a43f1558eae71b6eb537da378e8d19a92cb004b
 build:
   script:
     - if: unix
@@ -17,7 +16,7 @@ build:
         - R CMD INSTALL --build .
 requirements:
   host:
-  - r-base >= ${{ r_version }}
+  - r-base
   - r-data.table (>= 1.15)
   - r-dplyr
   - r-ggbreak
@@ -26,6 +25,7 @@ requirements:
   - r-ggtext
   - r-magrittr
   - r-plotly
+  - r-htmlwidgets
   - r-rlang
   - r-scales
   - r-tibble
@@ -41,6 +41,7 @@ requirements:
   - r-ggtext
   - r-magrittr
   - r-plotly
+  - r-htmlwidgets
   - r-rlang
   - r-scales
   - r-tibble

@@ -120,6 +120,10 @@ fig <- draw_plotly_manhattan(
   title = "Chromosome 6: 25-35 Mb"
 )
 fig
+
+# Save to HTML file for viewing in browser
+fig <- draw_plotly_manhattan(dat = gwas_data, p_threshold = 0.01)
+save_plotly_html(fig, "manhattan_plot.html")
 }
 }
 \author{
