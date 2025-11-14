@@ -3,6 +3,7 @@ channels:
 - conda-forge
 - bioconda
 - r
+- twillis209
 dependencies:
 - r-base
 - r-data.table >= 1.17
@@ -21,6 +22,7 @@ dependencies:
 - r-scales
 - r-ggrepel
 - r-vdiffr
-- r-diffviewer
-- r-pkgload=1.4.0
+# - r-diffviewer
+- r-pkgload >= 1.4.1
 - r-plotly
+- r-tomics >= 0.11.3

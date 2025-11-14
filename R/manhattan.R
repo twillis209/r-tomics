@@ -118,7 +118,6 @@ draw_manhattan <- function(processed_sumstats,
     merged_lead_snps <- merge(lead_snps, gwas_data[, .(chr, bp, bp_cum)], by = c("chr", "bp"))
 
     pl <- pl +
-      ## scale_y_neglog10(limits = y_limits, expand = ggplot2::expansion(mult = c(0, y_axis_space_mult))) +
       ggplot2::geom_point(ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)), size = 0.9, pch = 21, colour = "black", data = merged_lead_snps) +
       ggplot2::coord_cartesian(clip = "off") +
       rlang::exec(
@@ -275,6 +274,10 @@ scale_y_neglog10 <- function(..., breaks = scales::trans_breaks(function(x) {
 ##'   title = "Chromosome 6: 25-35 Mb"
 ##' )
 ##' fig
+##' 
+##' # Save to HTML file for viewing in browser
+##' fig <- draw_plotly_manhattan(dat = gwas_data, p_threshold = 0.01)
+##' save_plotly_html(fig, "manhattan_plot.html")
 ##' }
 ##' @export
 draw_plotly_manhattan <- function(dat,
@@ -426,3 +429,52 @@ draw_plotly_manhattan <- function(dat,
   
   return(fig)
 }
+
+##' Save plotly figure as standalone HTML file
+##'
+##' Saves an interactive plotly figure as a self-contained HTML file that can
+##' be opened in any web browser without needing R or any other dependencies.
+##'
+##' @param fig plotly figure object to save
+##' @param file character string specifying the output file path
+##' @param title character string for the HTML page title (optional)
+##' @return NULL (invisibly). Called for side effect of saving HTML file.
+##' @author Tom Willis
+##' @examples
+##' \dontrun{
+##' library(data.table)
+##' 
+##' gwas_data <- data.table(
+##'   chromosome = rep(1:22, each = 10000),
+##'   base_pair_location = rep(1:10000, 22) * 1000,
+##'   p_value = runif(220000, 0, 1),
+##'   snp_id = paste0("rs", 1:220000)
+##' )
+##' 
+##' fig <- draw_plotly_manhattan(dat = gwas_data, p_threshold = 0.01)
+##' save_plotly_html(fig, "manhattan_plot.html")
+##' 
+##' # View in browser
+##' browseURL("manhattan_plot.html")
+##' }
+##' @export
+save_plotly_html <- function(fig, file, title = "Interactive Plot") {
+  if (!requireNamespace("plotly", quietly = TRUE)) {
+    stop("Package 'plotly' is required for this function. Please install it with: install.packages('plotly')")
+  }
+  
+  if (!requireNamespace("htmlwidgets", quietly = TRUE)) {
+    stop("Package 'htmlwidgets' is required for this function. Please install it with: install.packages('htmlwidgets')")
+  }
+  
+  htmlwidgets::saveWidget(
+    widget = fig,
+    file = file,
+    selfcontained = TRUE,
+    title = title
+  )
+  
+  message(sprintf("Plot saved to: %s", file))
+  invisible(NULL)
+}
+
