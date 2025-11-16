@@ -148,6 +148,9 @@ draw_manhattan <- function(processed_sumstats,
 ##' @param y_limits limits for y axis (applied to both plots)
 ##' @param y_axis_breaks numeric vector containing coordinates at which to place
 ##'   breaks on the y-axis
+##' @param genome_wide_line numeric p-value for genome-wide significance line
+##'   (default NULL, no line). If provided, draws dashed blue horizontal lines
+##'   on both top and bottom plots.
 ##' @param top_label character string label for the top plot (default "Top")
 ##' @param bottom_label character string label for the bottom plot (default "Bottom")
 ##' @param point_size numeric value for point size (default 0.3)
@@ -183,8 +186,19 @@ draw_manhattan <- function(processed_sumstats,
 ##'   top_label = "Males",
 ##'   bottom_label = "Females"
 ##' )
+##' 
+##' # With genome-wide significance line
+##' draw_back_to_back_manhattan(
+##'   sumstats_1,
+##'   sumstats_2,
+##'   stat_col = "p_value",
+##'   genome_wide_line = 5e-8,
+##'   title = "Comparison with Significance Threshold",
+##'   top_label = "Males",
+##'   bottom_label = "Females"
+##' )
 ##' }
-##' @importFrom ggplot2 ggplot aes geom_point scale_x_continuous
+##' @importFrom ggplot2 ggplot aes geom_point geom_hline scale_x_continuous
 ##' scale_color_manual scale_size_continuous labs theme coord_cartesian
 ##' @importFrom ggtext element_markdown
 ##' @export
@@ -195,75 +209,56 @@ draw_back_to_back_manhattan <- function(processed_sumstats_top,
                                        title = "",
                                        y_limits = c(1, 1e-10),
                                        y_axis_breaks = 10^(-seq(0, 10, by = 1)),
+                                       genome_wide_line = NULL,
                                        top_label = "Top",
                                        bottom_label = "Bottom",
                                        point_size = 0.3) {
-  chr <- bp <- bp_cum <- neglog_p <- panel <- NULL
+  chr <- bp <- bp_cum <- p_value_plot <- panel <- NULL
 
   gwas_data_top <- data.table::copy(processed_sumstats_top$dat)
   gwas_data_bottom <- data.table::copy(processed_sumstats_bottom$dat)
   axis_set <- processed_sumstats_top$axis_set
 
-  gwas_data_top[, neglog_p := -log10(get(stat_col))]
+  # For top plot, keep p-values as is
+  gwas_data_top[, p_value_plot := get(stat_col)]
   gwas_data_top[, panel := top_label]
   
-  gwas_data_bottom[, neglog_p := -log10(get(stat_col))]
-  gwas_data_bottom[, neglog_p := -1 * neglog_p]
+  # For bottom plot, invert p-values to plot on negative side
+  # We'll use a transformation: if p = 1e-8, we want to plot it at "1e-8" but on negative axis
+  # This means storing it as a value > 1 that scale_y_neglog10 will handle
+  # We'll multiply by a large number to flip it
+  gwas_data_bottom[, p_value_plot := 1 / get(stat_col)]
   gwas_data_bottom[, panel := bottom_label]
 
   combined_dat <- rbind(gwas_data_top, gwas_data_bottom)
 
-  max_neglog <- max(abs(combined_dat$neglog_p), na.rm = TRUE)
-  y_limit_symmetric <- c(-max_neglog, max_neglog)
+  # Calculate symmetric limits in -log10 space
+  max_neglog_top <- max(-log10(gwas_data_top[[stat_col]]), na.rm = TRUE)
+  max_neglog_bottom <- max(-log10(gwas_data_bottom[[stat_col]]), na.rm = TRUE)
+  max_neglog <- max(max_neglog_top, max_neglog_bottom)
+  
+  # Create symmetric y_limits: from max_neglog down to 1, then from 1 up to 1/min_p
+  min_p_for_limits <- 10^(-max_neglog)
+  y_limits_symmetric <- c(1, min_p_for_limits, 1 / min_p_for_limits)
 
-  positive_breaks <- -log10(y_axis_breaks)
-  negative_breaks <- -positive_breaks
-  all_breaks <- sort(c(positive_breaks[positive_breaks <= max_neglog], 
-                       negative_breaks[negative_breaks >= -max_neglog]))
-
-  break_labels <- sapply(all_breaks, function(x) {
-    if (x >= 0) {
-      scales::scientific(10^(-x), digits = 0)
-    } else {
-      scales::scientific(10^(x), digits = 0)
-    }
-  })
+  # Create symmetric breaks: positive breaks for top, inverted breaks for bottom
+  positive_breaks <- y_axis_breaks[y_axis_breaks <= 1]
+  negative_breaks <- 1 / positive_breaks
+  all_breaks <- sort(c(positive_breaks, negative_breaks))
 
   pl <- ggplot2::ggplot(
     combined_dat,
-    ggplot2::aes(x = bp_cum, y = neglog_p, color = as.factor(chr))
+    ggplot2::aes(x = bp_cum, y = p_value_plot, color = as.factor(chr))
   ) +
-    ggplot2::geom_hline(yintercept = 0, linetype = "solid", color = "gray50", linewidth = 0.5) +
+    ggplot2::geom_hline(yintercept = 1, linetype = "solid", color = "gray50", linewidth = 0.5) +
     ggplot2::geom_point(size = point_size) +
     ggplot2::scale_x_continuous(breaks = NULL) +
-    ggplot2::scale_y_continuous(
-      breaks = all_breaks,
-      labels = break_labels,
-      limits = y_limit_symmetric
-    ) +
+    scale_y_neglog10(limits = range(y_limits_symmetric), breaks = all_breaks) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
     ggplot2::scale_size_continuous(range = c(0.5, 3)) +
     ggplot2::labs(
       x = NULL,
       y = "-log<sub>10</sub>(p)"
-    ) +
-    ggplot2::annotate(
-      "text",
-      x = -Inf,
-      y = max_neglog * 0.9,
-      label = top_label,
-      hjust = -0.1,
-      vjust = 0,
-      size = 4
-    ) +
-    ggplot2::annotate(
-      "text",
-      x = -Inf,
-      y = -max_neglog * 0.9,
-      label = bottom_label,
-      hjust = -0.1,
-      vjust = 1,
-      size = 4
     ) +
     ggplot2::theme(
       legend.position = "none",
@@ -274,6 +269,38 @@ draw_back_to_back_manhattan <- function(processed_sumstats_top,
       axis.ticks.x = ggplot2::element_blank()
     ) +
     ggplot2::ggtitle(title)
+
+  # Add genome-wide significance lines if specified
+  if (!is.null(genome_wide_line) && genome_wide_line > 0) {
+    pl <- pl +
+      ggplot2::geom_hline(yintercept = genome_wide_line, linetype = "dashed", color = "blue", linewidth = 0.5) +
+      ggplot2::geom_hline(yintercept = 1 / genome_wide_line, linetype = "dashed", color = "blue", linewidth = 0.5)
+  }
+
+  # Add text labels
+  # Position labels in the actual data space
+  label_y_top <- 10^(-(max_neglog * 0.9))
+  label_y_bottom <- 10^(max_neglog * 0.9)
+  
+  pl <- pl +
+    ggplot2::annotate(
+      "text",
+      x = -Inf,
+      y = label_y_top,
+      label = top_label,
+      hjust = -0.1,
+      vjust = 0,
+      size = 4
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = -Inf,
+      y = label_y_bottom,
+      label = bottom_label,
+      hjust = -0.1,
+      vjust = 1,
+      size = 4
+    )
 
   pl
 }
