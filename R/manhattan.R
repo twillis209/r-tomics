@@ -70,7 +70,7 @@ process_sumstats_for_manhattan <- function(dat, chr_col = "chromosome", bp_col =
 draw_manhattan <- function(processed_sumstats,
                            stat_col = "p",
                            palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
-                           title = "", y_limits = c(1, 1e-10), y_axis_breaks = NULL,
+                           title = "", y_limits = c(1, 1e-10), y_axis_breaks = 10^(-seq(0, 10, by = 1)),
                            lead_snps = NULL,
                            repel_args = list(
                              hjust = -0.2,
