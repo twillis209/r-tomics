@@ -131,6 +131,153 @@ draw_manhattan <- function(processed_sumstats,
   pl
 }
 
+##' Draw back-to-back Manhattan plots (mirrored)
+##'
+##' Creates two Manhattan plots stacked vertically with the bottom one reflected
+##' (inverted) along the x-axis. Useful for comparing two GWAS datasets side by
+##' side. Chromosome labels are omitted for clarity.
+##'
+##' @param processed_sumstats_top list containing data.table with processed
+##'   summary statistics for the top Manhattan plot
+##' @param processed_sumstats_bottom list containing data.table with processed
+##'   summary statistics for the bottom (reflected) Manhattan plot
+##' @param stat_col character string containing the column name for the test
+##'   statistic to display
+##' @param palette character vector containing colors for chromosomes
+##' @param title character string containing the title for the plot
+##' @param y_limits limits for y axis (applied to both plots)
+##' @param y_axis_breaks numeric vector containing coordinates at which to place
+##'   breaks on the y-axis
+##' @param top_label character string label for the top plot (default "Top")
+##' @param bottom_label character string label for the bottom plot (default "Bottom")
+##' @param point_size numeric value for point size (default 0.3)
+##' @return ggplot2 object with back-to-back Manhattan plots
+##' @author Tom Willis
+##' @examples
+##' \dontrun{
+##' library(data.table)
+##' 
+##' # Create two example datasets
+##' gwas_1 <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(500, 1e-10, 1e-6), runif(21500, 1e-3, 1))
+##' )
+##' 
+##' gwas_2 <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(600, 1e-12, 1e-7), runif(21400, 1e-3, 1))
+##' )
+##' 
+##' # Process both datasets
+##' sumstats_1 <- process_sumstats_for_manhattan(gwas_1, stat_cols = "p_value")
+##' sumstats_2 <- process_sumstats_for_manhattan(gwas_2, stat_cols = "p_value")
+##' 
+##' # Create back-to-back plot
+##' draw_back_to_back_manhattan(
+##'   sumstats_1,
+##'   sumstats_2,
+##'   stat_col = "p_value",
+##'   title = "Comparison of Two GWAS",
+##'   top_label = "Males",
+##'   bottom_label = "Females"
+##' )
+##' }
+##' @importFrom ggplot2 ggplot aes geom_point scale_x_continuous
+##' scale_color_manual scale_size_continuous labs theme coord_cartesian
+##' @importFrom ggtext element_markdown
+##' @export
+draw_back_to_back_manhattan <- function(processed_sumstats_top,
+                                       processed_sumstats_bottom,
+                                       stat_col = "p",
+                                       palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
+                                       title = "",
+                                       y_limits = c(1, 1e-10),
+                                       y_axis_breaks = 10^(-seq(0, 10, by = 1)),
+                                       top_label = "Top",
+                                       bottom_label = "Bottom",
+                                       point_size = 0.3) {
+  chr <- bp <- bp_cum <- neglog_p <- panel <- NULL
+
+  gwas_data_top <- data.table::copy(processed_sumstats_top$dat)
+  gwas_data_bottom <- data.table::copy(processed_sumstats_bottom$dat)
+  axis_set <- processed_sumstats_top$axis_set
+
+  gwas_data_top[, neglog_p := -log10(get(stat_col))]
+  gwas_data_top[, panel := top_label]
+  
+  gwas_data_bottom[, neglog_p := -log10(get(stat_col))]
+  gwas_data_bottom[, neglog_p := -1 * neglog_p]
+  gwas_data_bottom[, panel := bottom_label]
+
+  combined_dat <- rbind(gwas_data_top, gwas_data_bottom)
+
+  max_neglog <- max(abs(combined_dat$neglog_p), na.rm = TRUE)
+  y_limit_symmetric <- c(-max_neglog, max_neglog)
+
+  positive_breaks <- -log10(y_axis_breaks)
+  negative_breaks <- -positive_breaks
+  all_breaks <- sort(c(positive_breaks[positive_breaks <= max_neglog], 
+                       negative_breaks[negative_breaks >= -max_neglog]))
+
+  break_labels <- sapply(all_breaks, function(x) {
+    if (x >= 0) {
+      scales::scientific(10^(-x), digits = 0)
+    } else {
+      scales::scientific(10^(x), digits = 0)
+    }
+  })
+
+  pl <- ggplot2::ggplot(
+    combined_dat,
+    ggplot2::aes(x = bp_cum, y = neglog_p, color = as.factor(chr))
+  ) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "solid", color = "gray50", linewidth = 0.5) +
+    ggplot2::geom_point(size = point_size) +
+    ggplot2::scale_x_continuous(breaks = NULL) +
+    ggplot2::scale_y_continuous(
+      breaks = all_breaks,
+      labels = break_labels,
+      limits = y_limit_symmetric
+    ) +
+    ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
+    ggplot2::scale_size_continuous(range = c(0.5, 3)) +
+    ggplot2::labs(
+      x = NULL,
+      y = "-log<sub>10</sub>(p)"
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = -Inf,
+      y = max_neglog * 0.9,
+      label = top_label,
+      hjust = -0.1,
+      vjust = 0,
+      size = 4
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = -Inf,
+      y = -max_neglog * 0.9,
+      label = bottom_label,
+      hjust = -0.1,
+      vjust = 1,
+      size = 4
+    ) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      axis.title.y = ggtext::element_markdown(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank()
+    ) +
+    ggplot2::ggtitle(title)
+
+  pl
+}
+
 ##' -log transformation
 ##'
 ##' @param base base of the logarithm
@@ -630,6 +777,8 @@ draw_superimposed_manhattan <- function(processed_sumstats_before,
 ##' @param p_threshold numeric p-value threshold for filtering SNPs (default 1,
 ##'   no filtering). SNPs with p > p_threshold in both before AND after datasets
 ##'   are excluded to improve performance.
+##' @param genome_wide_line numeric p-value for genome-wide significance line
+##'   (default NULL, no line). If provided, draws a dashed blue horizontal line.
 ##' @param n_frames integer number of intermediate frames to generate (default 20)
 ##' @param frame_duration integer milliseconds per frame (default 100)
 ##' @param transition_duration integer milliseconds for transitions between frames (default 50)
@@ -680,6 +829,16 @@ draw_superimposed_manhattan <- function(processed_sumstats_before,
 ##' )
 ##' fig
 ##' 
+##' # With genome-wide significance line
+##' fig <- draw_animated_manhattan_plotly(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   genome_wide_line = 5e-8,
+##'   title = "GWAS Analysis with Significance Threshold"
+##' )
+##' fig
+##' 
 ##' # Save to HTML
 ##' save_plotly_html(fig, "animated_manhattan.html")
 ##' }
@@ -688,6 +847,7 @@ draw_animated_manhattan_plotly <- function(processed_sumstats_before,
                                           processed_sumstats_after,
                                           stat_col = "p",
                                           p_threshold = 1,
+                                          genome_wide_line = NULL,
                                           n_frames = 20,
                                           frame_duration = 100,
                                           transition_duration = 50,
@@ -760,6 +920,20 @@ draw_animated_manhattan_plotly <- function(processed_sumstats_before,
         opacity = 0.7
       ),
       showlegend = FALSE
+    )
+  }
+  
+  if (!is.null(genome_wide_line) && genome_wide_line > 0) {
+    fig <- plotly::add_trace(
+      fig,
+      x = c(min(all_frames$bp_cum), max(all_frames$bp_cum)),
+      y = c(-log10(genome_wide_line), -log10(genome_wide_line)),
+      type = "scatter",
+      mode = "lines",
+      line = list(color = "blue", dash = "dash", width = 1),
+      name = sprintf("Genome-wide (p=%.0e)", genome_wide_line),
+      hoverinfo = "name",
+      showlegend = TRUE
     )
   }
   
