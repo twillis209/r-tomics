@@ -1,0 +1,8 @@
+name: diffviewer
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - r-diffviewer
+  - r-devtools
+  - r-usethis
