@@ -270,3 +270,35 @@ test_that("back to back manhattan plot matches expected output visually", {
   )
 })
 
+test_that("back to back manhattan plot with genome_wide_line matches expected output visually", {
+  set.seed(502)
+  dat_top <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(50, 1e-10, 1e-6), runif(2150, 1e-3, 1))
+  )
+
+  set.seed(503)
+  dat_bottom <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(60, 1e-12, 1e-7), runif(2140, 1e-3, 1))
+  )
+
+  sumstats_top <- process_sumstats_for_manhattan(dat_top, stat_cols = "p_value")
+  sumstats_bottom <- process_sumstats_for_manhattan(dat_bottom, stat_cols = "p_value")
+
+  vdiffr::expect_doppelganger(
+    "back to back manhattan plot with significance line",
+    draw_back_to_back_manhattan(
+      sumstats_top,
+      sumstats_bottom,
+      stat_col = "p_value",
+      genome_wide_line = 5e-8,
+      title = "Back-to-Back Manhattan with Threshold",
+      top_label = "Dataset A",
+      bottom_label = "Dataset B"
+    )
+  )
+})
+
