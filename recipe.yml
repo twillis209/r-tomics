@@ -1,12 +1,12 @@
 context:
-  version: 0.14.0
+  version: 0.18.0
 package:
   name: r-tomics
   version: ${{ version }}
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: ccbccd15056f08dde073d07d3a240524169d63f66d6b11b4c0dc5b102636fa0d
+  sha256: da5a75e3770321ec22410b03cf7faac0f65ddeee1546e79a408490d7030d967d
 build:
   script:
     - if: unix
