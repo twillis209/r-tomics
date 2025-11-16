@@ -13,6 +13,7 @@ draw_back_to_back_manhattan(
   title = "",
   y_limits = c(1, 1e-10),
   y_axis_breaks = 10^(-seq(0, 10, by = 1)),
+  genome_wide_line = NULL,
   top_label = "Top",
   bottom_label = "Bottom",
   point_size = 0.3
@@ -36,6 +37,10 @@ statistic to display}
 
 \item{y_axis_breaks}{numeric vector containing coordinates at which to place
 breaks on the y-axis}
+
+\item{genome_wide_line}{numeric p-value for genome-wide significance line
+(default NULL, no line). If provided, draws dashed blue horizontal lines
+on both top and bottom plots.}
 
 \item{top_label}{character string label for the top plot (default "Top")}
 
@@ -78,6 +83,17 @@ draw_back_to_back_manhattan(
   sumstats_2,
   stat_col = "p_value",
   title = "Comparison of Two GWAS",
+  top_label = "Males",
+  bottom_label = "Females"
+)
+
+# With genome-wide significance line
+draw_back_to_back_manhattan(
+  sumstats_1,
+  sumstats_2,
+  stat_col = "p_value",
+  genome_wide_line = 5e-8,
+  title = "Comparison with Significance Threshold",
   top_label = "Males",
   bottom_label = "Females"
 )
