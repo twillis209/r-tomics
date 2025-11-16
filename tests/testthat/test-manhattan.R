@@ -51,3 +51,149 @@ test_that("manhattan plot with custom y_axis_breaks matches expected output visu
     )
   )
 })
+
+test_that("superimposed manhattan plot matches expected output visually", {
+  set.seed(100)
+  dat_before <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(50, 1e-10, 1e-6), runif(2150, 1e-3, 1))
+  )
+
+  set.seed(101)
+  dat_after <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(60, 1e-12, 1e-7), runif(2140, 1e-3, 1))
+  )
+
+  sumstats_before <- process_sumstats_for_manhattan(dat_before, stat_cols = "p_value")
+  sumstats_after <- process_sumstats_for_manhattan(dat_after, stat_cols = "p_value")
+
+  vdiffr::expect_doppelganger(
+    "superimposed manhattan plot",
+    draw_superimposed_manhattan(
+      sumstats_before,
+      sumstats_after,
+      stat_col = "p_value",
+      alpha_before = 0.3,
+      alpha_after = 1.0,
+      title = "Before vs After Manhattan Plot",
+      legend_labels = c("Before", "After")
+    )
+  )
+})
+
+test_that("superimposed manhattan plot with distinct palettes matches expected output visually", {
+  set.seed(200)
+  dat_before <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(50, 1e-10, 1e-6), runif(2150, 1e-3, 1))
+  )
+
+  set.seed(201)
+  dat_after <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(60, 1e-12, 1e-7), runif(2140, 1e-3, 1))
+  )
+
+  sumstats_before <- process_sumstats_for_manhattan(dat_before, stat_cols = "p_value")
+  sumstats_after <- process_sumstats_for_manhattan(dat_after, stat_cols = "p_value")
+
+  vdiffr::expect_doppelganger(
+    "superimposed manhattan plot with distinct palettes",
+    draw_superimposed_manhattan(
+      sumstats_before,
+      sumstats_after,
+      stat_col = "p_value",
+      alpha_before = 0.4,
+      alpha_after = 0.8,
+      palette_before = c("#E69F00", "#F0E442"),
+      palette_after = c("#0072B2", "#56B4E9"),
+      title = "Before (warm) vs After (cool)",
+      legend_labels = c("Before", "After")
+    )
+  )
+})
+
+test_that("animated manhattan plot with plotly creates valid plotly object", {
+  skip_if_not_installed("plotly")
+  
+  set.seed(300)
+  dat_before <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(25, 1e-8, 1e-4), runif(225, 1e-3, 1))
+  )
+
+  set.seed(301)
+  dat_after <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(30, 1e-10, 1e-5), runif(220, 1e-3, 1))
+  )
+
+  sumstats_before <- process_sumstats_for_manhattan(
+    dat_before, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+  sumstats_after <- process_sumstats_for_manhattan(
+    dat_after, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+
+  fig <- draw_animated_manhattan_plotly(
+    sumstats_before,
+    sumstats_after,
+    stat_col = "p_value",
+    n_frames = 5,
+    title = "Test Animation"
+  )
+
+  expect_s3_class(fig, "plotly")
+})
+
+test_that("animated manhattan plot with plotly and p_threshold filters correctly", {
+  skip_if_not_installed("plotly")
+  
+  set.seed(302)
+  dat_before <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(25, 1e-8, 1e-4), runif(225, 1e-3, 1))
+  )
+
+  set.seed(303)
+  dat_after <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(30, 1e-10, 1e-5), runif(220, 1e-3, 1))
+  )
+
+  sumstats_before <- process_sumstats_for_manhattan(
+    dat_before, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+  sumstats_after <- process_sumstats_for_manhattan(
+    dat_after, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+
+  # Test with p_threshold
+  fig <- draw_animated_manhattan_plotly(
+    sumstats_before,
+    sumstats_after,
+    stat_col = "p_value",
+    p_threshold = 0.01,
+    n_frames = 5,
+    title = "Test Animation with Filtering"
+  )
+
+  expect_s3_class(fig, "plotly")
+})

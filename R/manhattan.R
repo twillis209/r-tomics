@@ -430,6 +430,386 @@ draw_plotly_manhattan <- function(dat,
   return(fig)
 }
 
+##' Draw superimposed Manhattan plots (before and after comparison)
+##'
+##' Creates a Manhattan plot with two datasets overlaid, typically representing
+##' before and after analyses. The first dataset is drawn with reduced opacity
+##' (faded) and the second with full or higher opacity (solid), making it easy
+##' to compare changes between two analyses.
+##'
+##' @param processed_sumstats_before list containing data.table with processed
+##'   summary statistics for the "before" dataset (will be faded)
+##' @param processed_sumstats_after list containing data.table with processed
+##'   summary statistics for the "after" dataset (will be solid)
+##' @param stat_col character string containing the column name for the test
+##'   statistic to display
+##' @param alpha_before numeric value between 0 and 1 for transparency of the
+##'   "before" dataset (default 0.3 for faded appearance)
+##' @param alpha_after numeric value between 0 and 1 for transparency of the
+##'   "after" dataset (default 1.0 for solid appearance)
+##' @param palette_before character vector containing colors for chromosomes in
+##'   the "before" dataset. If NULL, uses palette.
+##' @param palette_after character vector containing colors for chromosomes in
+##'   the "after" dataset. If NULL, uses palette.
+##' @param palette character vector containing colors for chromosomes (used for
+##'   both datasets if palette_before and palette_after are not specified)
+##' @param title character string containing the title for the plot
+##' @param y_limits limits for y axis
+##' @param y_axis_breaks numeric vector containing coordinates at which to place
+##'   breaks on the y-axis
+##' @param legend_labels character vector of length 2 with labels for the two
+##'   datasets (default c("Before", "After"))
+##' @param point_size numeric value for point size (default 0.3)
+##' @return ggplot2 object with superimposed Manhattan plots
+##' @author Tom Willis
+##' @examples
+##' \dontrun{
+##' library(data.table)
+##' 
+##' # Create example GWAS data for "before" analysis
+##' gwas_before <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(500, 1e-10, 1e-6), runif(21500, 1e-3, 1))
+##' )
+##' 
+##' # Create example GWAS data for "after" analysis with some improved signals
+##' gwas_after <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(600, 1e-12, 1e-7), runif(21400, 1e-3, 1))
+##' )
+##' 
+##' # Process both datasets
+##' sumstats_before <- process_sumstats_for_manhattan(
+##'   gwas_before,
+##'   stat_cols = "p_value"
+##' )
+##' 
+##' sumstats_after <- process_sumstats_for_manhattan(
+##'   gwas_after,
+##'   stat_cols = "p_value"
+##' )
+##' 
+##' # Create superimposed Manhattan plot with same palette
+##' draw_superimposed_manhattan(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   alpha_before = 0.3,
+##'   alpha_after = 1.0,
+##'   title = "GWAS: Before vs After QC",
+##'   legend_labels = c("Before QC", "After QC")
+##' )
+##' 
+##' # Use distinct palettes for before and after
+##' draw_superimposed_manhattan(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   alpha_before = 0.4,
+##'   alpha_after = 0.8,
+##'   palette_before = c("#E69F00", "#F0E442"),  # Orange/yellow tones
+##'   palette_after = c("#0072B2", "#56B4E9"),   # Blue tones
+##'   title = "GWAS: Before (warm) vs After (cool)"
+##' )
+##' 
+##' # Customize appearance with distinct palettes
+##' draw_superimposed_manhattan(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   alpha_before = 0.2,
+##'   alpha_after = 0.8,
+##'   point_size = 0.5,
+##'   palette_before = c("gray60", "gray40"),
+##'   palette_after = c("#D55E00", "#CC79A7"),
+##'   y_limits = c(1, 1e-12),
+##'   y_axis_breaks = c(1, 1e-3, 1e-6, 1e-9, 1e-12),
+##'   title = "Comparison of Meta-Analysis Results"
+##' )
+##' }
+##' @importFrom ggplot2 ggplot aes geom_point scale_x_continuous
+##' scale_color_manual scale_size_continuous labs theme expansion
+##' @importFrom ggtext element_markdown
+##' @importFrom ggnewscale new_scale_color
+##' @export
+draw_superimposed_manhattan <- function(processed_sumstats_before,
+                                       processed_sumstats_after,
+                                       stat_col = "p",
+                                       alpha_before = 0.3,
+                                       alpha_after = 1.0,
+                                       palette_before = NULL,
+                                       palette_after = NULL,
+                                       palette = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"),
+                                       title = "",
+                                       y_limits = c(1, 1e-10),
+                                       y_axis_breaks = 10^(-seq(0, 10, by = 1)),
+                                       legend_labels = c("Before", "After"),
+                                       point_size = 0.3) {
+  chr <- bp <- bp_cum <- dataset <- NULL
+
+  gwas_data_before <- processed_sumstats_before$dat
+  gwas_data_after <- processed_sumstats_after$dat
+  axis_set <- processed_sumstats_before$axis_set
+
+  gwas_data_before$dataset <- legend_labels[1]
+  gwas_data_after$dataset <- legend_labels[2]
+
+  if (is.null(palette_before)) palette_before <- palette
+  if (is.null(palette_after)) palette_after <- palette
+
+  use_distinct_palettes <- !identical(palette_before, palette_after)
+
+  if (use_distinct_palettes) {
+    pl <- ggplot2::ggplot() +
+      ggplot2::geom_point(
+        ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)),
+        data = gwas_data_before,
+        size = point_size,
+        alpha = alpha_before
+      ) +
+      ggplot2::scale_color_manual(values = rep(palette_before, unique(length(axis_set$chr)))) +
+      ggnewscale::new_scale_color() +
+      ggplot2::geom_point(
+        ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)),
+        data = gwas_data_after,
+        size = point_size,
+        alpha = alpha_after
+      ) +
+      ggplot2::scale_color_manual(values = rep(palette_after, unique(length(axis_set$chr))))
+  } else {
+    pl <- ggplot2::ggplot() +
+      ggplot2::geom_point(
+        ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)),
+        data = gwas_data_before,
+        size = point_size,
+        alpha = alpha_before
+      ) +
+      ggplot2::geom_point(
+        ggplot2::aes(x = bp_cum, y = !!rlang::sym(stat_col), color = as.factor(chr)),
+        data = gwas_data_after,
+        size = point_size,
+        alpha = alpha_after
+      ) +
+      ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr))))
+  }
+
+  pl <- pl +
+    ggplot2::scale_x_continuous(label = axis_set$chr, breaks = axis_set$center) +
+    ggplot2::scale_size_continuous(range = c(0.5, 3)) +
+    scale_y_neglog10(limits = y_limits, breaks = y_axis_breaks) +
+    ggplot2::labs(
+      x = NULL,
+      y = "-log<sub>10</sub>(p)"
+    ) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.major.x = ggplot2::element_blank(),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      axis.title.y = ggtext::element_markdown(),
+      axis.text.x = ggplot2::element_text(angle = 60, size = 8, vjust = 0.5)
+    ) +
+    ggplot2::ggtitle(title)
+
+  pl
+}
+
+##' Animate Manhattan plot transition using plotly
+##'
+##' Creates an interactive animated Manhattan plot showing the transition from
+##' "before" to "after" datasets using plotly's animation framework. The animation
+##' can be controlled with play/pause buttons.
+##'
+##' @param processed_sumstats_before list containing data.table with processed
+##'   summary statistics for the "before" dataset
+##' @param processed_sumstats_after list containing data.table with processed
+##'   summary statistics for the "after" dataset
+##' @param stat_col character string containing the column name for the test
+##'   statistic to display
+##' @param p_threshold numeric p-value threshold for filtering SNPs (default 1,
+##'   no filtering). SNPs with p > p_threshold in both before AND after datasets
+##'   are excluded to improve performance.
+##' @param n_frames integer number of intermediate frames to generate (default 20)
+##' @param frame_duration integer milliseconds per frame (default 100)
+##' @param transition_duration integer milliseconds for transitions between frames (default 50)
+##' @param palette character vector containing colors for chromosomes
+##' @param title character string containing the title for the plot
+##' @param point_size numeric size of points (default 3)
+##' @return plotly object with animated Manhattan plot
+##' @author Tom Willis
+##' @examples
+##' \dontrun{
+##' library(data.table)
+##' 
+##' # Create example datasets
+##' gwas_before <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(500, 1e-10, 1e-6), runif(21500, 1e-3, 1))
+##' )
+##' 
+##' gwas_after <- data.table(
+##'   chromosome = rep(1:22, each = 1000),
+##'   base_pair_location = rep(1:1000, 22) * 10000,
+##'   p_value = c(runif(600, 1e-12, 1e-7), runif(21400, 1e-3, 1))
+##' )
+##' 
+##' # Process datasets
+##' sumstats_before <- process_sumstats_for_manhattan(gwas_before, stat_cols = "p_value")
+##' sumstats_after <- process_sumstats_for_manhattan(gwas_after, stat_cols = "p_value")
+##' 
+##' # Create animated plot
+##' fig <- draw_animated_manhattan_plotly(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   n_frames = 30,
+##'   title = "GWAS Analysis: Before → After"
+##' )
+##' fig
+##' 
+##' # With p-value filtering for better performance
+##' fig <- draw_animated_manhattan_plotly(
+##'   sumstats_before,
+##'   sumstats_after,
+##'   stat_col = "p_value",
+##'   p_threshold = 0.01,
+##'   n_frames = 30,
+##'   title = "GWAS Analysis: Before → After (filtered)"
+##' )
+##' fig
+##' 
+##' # Save to HTML
+##' save_plotly_html(fig, "animated_manhattan.html")
+##' }
+##' @export
+draw_animated_manhattan_plotly <- function(processed_sumstats_before,
+                                          processed_sumstats_after,
+                                          stat_col = "p",
+                                          p_threshold = 1,
+                                          n_frames = 20,
+                                          frame_duration = 100,
+                                          transition_duration = 50,
+                                          palette = c("#E69F00", "#56B4E9"),
+                                          title = "Manhattan Plot Animation",
+                                          point_size = 3) {
+  
+  if (!requireNamespace("plotly", quietly = TRUE)) {
+    stop("Package 'plotly' is required for this function. Please install it with: install.packages('plotly')")
+  }
+  
+  chr <- bp <- bp_cum <- color_group <- neglog_p <- frame <- NULL
+  
+  dat_before <- data.table::copy(processed_sumstats_before$dat)
+  dat_after <- data.table::copy(processed_sumstats_after$dat)
+  axis_set <- processed_sumstats_before$axis_set
+  
+  if (!all(c("chr", "bp_cum", stat_col) %in% names(dat_before))) {
+    stop("processed_sumstats_before must contain chr, bp_cum, and stat_col columns")
+  }
+  
+  if (!all(c("chr", "bp_cum", stat_col) %in% names(dat_after))) {
+    stop("processed_sumstats_after must contain chr, bp_cum, and stat_col columns")
+  }
+  
+  if (p_threshold < 1) {
+    dat_before <- dat_before[get(stat_col) <= p_threshold]
+    dat_after <- dat_after[get(stat_col) <= p_threshold]
+  }
+  
+  dat_before[, neglog_p_before := -log10(get(stat_col))]
+  dat_after[, neglog_p_after := -log10(get(stat_col))]
+  
+  merged_dat <- merge(dat_before[, .(chr, bp_cum, neglog_p_before)], 
+                      dat_after[, .(chr, bp_cum, neglog_p_after)], 
+                      by = c("chr", "bp_cum"), 
+                      all = TRUE)
+  
+  merged_dat[is.na(neglog_p_before), neglog_p_before := 0]
+  merged_dat[is.na(neglog_p_after), neglog_p_after := 0]
+  
+  merged_dat[, color_group := (chr %% 2) + 1]
+  
+  frames_list <- list()
+  for (i in 0:n_frames) {
+    alpha <- i / n_frames
+    frame_dat <- data.table::copy(merged_dat)
+    frame_dat[, neglog_p := neglog_p_before * (1 - alpha) + neglog_p_after * alpha]
+    frame_dat[, frame := i]
+    frames_list[[i + 1]] <- frame_dat
+  }
+  
+  all_frames <- data.table::rbindlist(frames_list)
+  
+  fig <- plotly::plot_ly()
+  
+  for (grp in unique(all_frames$color_group)) {
+    dat_subset <- all_frames[color_group == grp]
+    fig <- plotly::add_trace(
+      fig,
+      data = dat_subset,
+      x = ~bp_cum,
+      y = ~neglog_p,
+      frame = ~frame,
+      type = "scatter",
+      mode = "markers",
+      marker = list(
+        size = point_size,
+        color = palette[grp],
+        opacity = 0.7
+      ),
+      showlegend = FALSE
+    )
+  }
+  
+  xaxis_config <- list(
+    title = "Chromosome",
+    tickmode = "array",
+    tickvals = axis_set$center,
+    ticktext = axis_set$chr,
+    zeroline = FALSE
+  )
+  
+  fig <- plotly::layout(
+    fig,
+    title = title,
+    xaxis = xaxis_config,
+    yaxis = list(
+      title = "-log<sub>10</sub>(P-value)",
+      zeroline = FALSE
+    ),
+    updatemenus = list(
+      list(
+        type = "buttons",
+        showactive = FALSE,
+        buttons = list(
+          list(
+            label = "Play",
+            method = "animate",
+            args = list(NULL, list(
+              frame = list(duration = frame_duration, redraw = TRUE),
+              transition = list(duration = transition_duration),
+              fromcurrent = TRUE,
+              mode = "immediate"
+            ))
+          ),
+          list(
+            label = "Pause",
+            method = "animate",
+            args = list(list(NULL), list(
+              frame = list(duration = 0, redraw = FALSE),
+              mode = "immediate"
+            ))
+          )
+        )
+      )
+    )
+  )
+  
+  return(fig)
+}
+
 ##' Save plotly figure as standalone HTML file
 ##'
 ##' Saves an interactive plotly figure as a self-contained HTML file that can

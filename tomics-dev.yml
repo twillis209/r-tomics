@@ -22,7 +22,8 @@ dependencies:
 - r-scales
 - r-ggrepel
 - r-vdiffr
-# - r-diffviewer
 - r-pkgload >= 1.4.1
 - r-plotly
-- r-tomics >= 0.11.3
+- r-ggnewscale
+- r-gganimate
+- r-gifski
