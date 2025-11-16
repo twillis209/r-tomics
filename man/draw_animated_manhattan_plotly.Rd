@@ -9,6 +9,7 @@ draw_animated_manhattan_plotly(
   processed_sumstats_after,
   stat_col = "p",
   p_threshold = 1,
+  genome_wide_line = NULL,
   n_frames = 20,
   frame_duration = 100,
   transition_duration = 50,
@@ -30,6 +31,9 @@ statistic to display}
 \item{p_threshold}{numeric p-value threshold for filtering SNPs (default 1,
 no filtering). SNPs with p > p_threshold in both before AND after datasets
 are excluded to improve performance.}
+
+\item{genome_wide_line}{numeric p-value for genome-wide significance line
+(default NULL, no line). If provided, draws a dashed blue horizontal line.}
 
 \item{n_frames}{integer number of intermediate frames to generate (default 20)}
 
@@ -90,6 +94,16 @@ fig <- draw_animated_manhattan_plotly(
   p_threshold = 0.01,
   n_frames = 30,
   title = "GWAS Analysis: Before → After (filtered)"
+)
+fig
+
+# With genome-wide significance line
+fig <- draw_animated_manhattan_plotly(
+  sumstats_before,
+  sumstats_after,
+  stat_col = "p_value",
+  genome_wide_line = 5e-8,
+  title = "GWAS Analysis with Significance Threshold"
 )
 fig
 

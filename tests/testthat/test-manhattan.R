@@ -197,3 +197,76 @@ test_that("animated manhattan plot with plotly and p_threshold filters correctly
 
   expect_s3_class(fig, "plotly")
 })
+
+test_that("animated manhattan plot with plotly and genome_wide_line works", {
+  skip_if_not_installed("plotly")
+  
+  set.seed(304)
+  dat_before <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(25, 1e-8, 1e-4), runif(225, 1e-3, 1))
+  )
+
+  set.seed(305)
+  dat_after <- data.table::data.table(
+    chromosome = rep(1:5, each = 50),
+    base_pair_location = rep(1:50, 5) * 1e6,
+    p_value = c(runif(30, 1e-10, 1e-5), runif(220, 1e-3, 1))
+  )
+
+  sumstats_before <- process_sumstats_for_manhattan(
+    dat_before, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+  sumstats_after <- process_sumstats_for_manhattan(
+    dat_after, 
+    stat_cols = "p_value",
+    chromosomes = as.character(1:5)
+  )
+
+  # Test with genome_wide_line
+  fig <- draw_animated_manhattan_plotly(
+    sumstats_before,
+    sumstats_after,
+    stat_col = "p_value",
+    genome_wide_line = 5e-8,
+    n_frames = 5,
+    title = "Test Animation with Significance Line"
+  )
+
+  expect_s3_class(fig, "plotly")
+})
+
+test_that("back to back manhattan plot matches expected output visually", {
+  set.seed(500)
+  dat_top <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(50, 1e-10, 1e-6), runif(2150, 1e-3, 1))
+  )
+
+  set.seed(501)
+  dat_bottom <- data.table::data.table(
+    chromosome = rep(1:22, each = 100),
+    base_pair_location = rep(1:100, 22) * 1e6,
+    p_value = c(runif(60, 1e-12, 1e-7), runif(2140, 1e-3, 1))
+  )
+
+  sumstats_top <- process_sumstats_for_manhattan(dat_top, stat_cols = "p_value")
+  sumstats_bottom <- process_sumstats_for_manhattan(dat_bottom, stat_cols = "p_value")
+
+  vdiffr::expect_doppelganger(
+    "back to back manhattan plot",
+    draw_back_to_back_manhattan(
+      sumstats_top,
+      sumstats_bottom,
+      stat_col = "p_value",
+      title = "Back-to-Back Manhattan",
+      top_label = "Dataset A",
+      bottom_label = "Dataset B"
+    )
+  )
+})
+
