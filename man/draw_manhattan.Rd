@@ -11,7 +11,7 @@ draw_manhattan(
     "#CC79A7"),
   title = "",
   y_limits = c(1, 1e-10),
-  y_axis_breaks = NULL,
+  y_axis_breaks = 10^(-seq(0, 10, by = 1)),
   lead_snps = NULL,
   repel_args = list(hjust = -0.2, vjust = 0, size = 6, angle = 45, colour = "black",
     direction = "x", nudge_y = 0)
