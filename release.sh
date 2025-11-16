@@ -93,7 +93,7 @@ read -p "Push to remote and create release? [y/N]: " push_choice
 if [[ $push_choice =~ ^[Yy]$ ]]; then
     current_branch=$(git branch --show-current)
     echo "Pushing branch $current_branch..."
-    git push origin "$current_branch"
+    git push -f origin "$current_branch"
     
     echo "Pushing tag v$version..."
     git push -f origin "v$version"
