@@ -1,12 +1,12 @@
 context:
-  version: 0.13.0
+  version: 0.13.1
 package:
   name: r-tomics
   version: ${{ version }}
 source:
   url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
     }}/tomics_${{ version }}.tar.gz
-  sha256: b830ab4632d82f5e7adea7288597902670436e80c4cfa6a675f2f72a26b90d98
+  sha256: 89cb1bb89b0eb4b14b524925ff8adf3d27e08f889ab7fc34818c8ab5a3804b7e
 build:
   script:
     - if: unix
@@ -31,6 +31,7 @@ requirements:
   - r-tibble
   - r-tidyr
   - r-tidyselect
+  - r-ggnewscale
   run:
   - r-base
   - r-data.table (>= 1.15)
@@ -47,6 +48,7 @@ requirements:
   - r-tibble
   - r-tidyr
   - r-tidyselect
+  - r-ggnewscale
 tests:
 - script:
   - Rscript -e "library('tomics');"
