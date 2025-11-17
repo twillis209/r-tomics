@@ -11,7 +11,11 @@ scale_y_neglog10(
  }, function(x) {
     
     10^(-1 * x)
- })
+ }),
+  labels = scales::trans_format(function(x) {
+     log10(x) * -1
+ },
+    scales::math_format(.x))
 )
 }
 \arguments{
