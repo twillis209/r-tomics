@@ -245,6 +245,21 @@ draw_back_to_back_manhattan <- function(processed_sumstats_top,
   positive_breaks <- y_axis_breaks[y_axis_breaks <= 1]
   negative_breaks <- 1 / positive_breaks
   all_breaks <- sort(c(positive_breaks, negative_breaks))
+  
+  # Create custom labels without minus signs
+  # The scale_y_neglog10 will create labels, but we need to override them
+  break_labels <- sapply(all_breaks, function(x) {
+    # For values > 1, we're on the negative (bottom) side
+    # For values <= 1, we're on the positive (top) side
+    # Both should show as positive p-values
+    if (x > 1) {
+      # Bottom half: convert back to p-value and format
+      log10(x)
+    } else {
+      # Top half: normal p-value formatting
+      -log10(x)
+    }
+  })
 
   pl <- ggplot2::ggplot(
     combined_dat,
@@ -252,8 +267,12 @@ draw_back_to_back_manhattan <- function(processed_sumstats_top,
   ) +
     ggplot2::geom_hline(yintercept = 1, linetype = "solid", color = "gray50", linewidth = 0.5) +
     ggplot2::geom_point(size = point_size) +
-    ggplot2::scale_x_continuous(breaks = NULL) +
-    scale_y_neglog10(limits = range(y_limits_symmetric), breaks = all_breaks) +
+    ggplot2::scale_x_continuous(
+      breaks = axis_set$center,
+      labels = axis_set$chr,
+      position = "top"
+    ) +
+    scale_y_neglog10(limits = range(y_limits_symmetric), breaks = all_breaks, labels = break_labels) +
     ggplot2::scale_color_manual(values = rep(palette, unique(length(axis_set$chr)))) +
     ggplot2::scale_size_continuous(range = c(0.5, 3)) +
     ggplot2::labs(
@@ -265,7 +284,7 @@ draw_back_to_back_manhattan <- function(processed_sumstats_top,
       panel.grid.major.x = ggplot2::element_blank(),
       panel.grid.minor.x = ggplot2::element_blank(),
       axis.title.y = ggtext::element_markdown(),
-      axis.text.x = ggplot2::element_blank(),
+      axis.text.x.top = ggplot2::element_text(size = 8),
       axis.ticks.x = ggplot2::element_blank()
     ) +
     ggplot2::ggtitle(title)
@@ -326,7 +345,9 @@ neglog_trans <- function(base = exp(1)) {
 ##' @importFrom scales trans_breaks trans_format math_format
 ##' @importFrom ggplot2 scale_x_continuous
 ##' @export
-scale_x_neglog10 <- function(...) {
+scale_x_neglog10 <- function(..., labels = scales::trans_format(function(x) {
+  log10(x) * -1
+}, scales::math_format(.x))) {
   .x <- NULL
 
   ggplot2::scale_x_continuous(...,
@@ -336,9 +357,7 @@ scale_x_neglog10 <- function(...) {
     }, function(x) {
       10^(-1 * x)
     }),
-    labels = scales::trans_format(function(x) {
-      log10(x) * -1
-    }, scales::math_format(.x))
+    labels = labels
   )
 }
 
@@ -354,15 +373,15 @@ scale_y_neglog10 <- function(..., breaks = scales::trans_breaks(function(x) {
   log10(x) * -1
 }, function(x) {
   10^(-1 * x)
-})) {
+}), labels = scales::trans_format(function(x) {
+  log10(x) * -1
+}, scales::math_format(.x))) {
   .x <- NULL
 
   ggplot2::scale_y_continuous(...,
     trans = neglog_trans(base = 10),
     breaks = breaks,
-    labels = scales::trans_format(function(x) {
-      log10(x) * -1
-    }, scales::math_format(.x))
+    labels = labels
   )
 }
 
