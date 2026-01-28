@@ -4,9 +4,11 @@ package:
   name: r-tomics
   version: ${{ version }}
 source:
-  url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
-    }}/tomics_${{ version }}.tar.gz
-  sha256: 47e296f64c97afb3b75a9b5a65cc0fedbf8ecefd25b6469ef1bbf17a256e2293
+  git: ./.
+  rev: master
+  # url: https://github.com/twillis209/r-tomics/releases/download/v${{ version
+  #   }}/tomics_${{ version }}.tar.gz
+  # sha256: 47e296f64c97afb3b75a9b5a65cc0fedbf8ecefd25b6469ef1bbf17a256e2293
 build:
   script:
     - if: unix
