@@ -22,7 +22,7 @@ dependencies:
 - r-scales
 - r-ggrepel
 - r-vdiffr
-- r-pkgload >= 1.4.1
+- r-pkgload
 - r-plotly
 - r-ggnewscale
 - r-gganimate
