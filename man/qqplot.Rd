@@ -4,7 +4,15 @@
 \alias{qqplot}
 \title{Draw Q-Q plot.}
 \usage{
-qqplot(daf, p_cols, p_col_labels, geom = "line")
+qqplot(
+  daf,
+  p_cols,
+  p_col_labels = p_cols,
+  subset_col = NULL,
+  subset_values = NULL,
+  subset_labels = NULL,
+  geom = "line"
+)
 }
 \arguments{
 \item{daf}{data.frame containing p-values.}
@@ -13,6 +21,12 @@ qqplot(daf, p_cols, p_col_labels, geom = "line")
 
 \item{p_col_labels}{p-value column labels to apply to the plot legend}
 
+\item{subset_col}{optional character string specifying a column to use for subsetting data}
+
+\item{subset_values}{optional vector of values in subset_col to plot as separate lines}
+
+\item{subset_labels}{optional vector of labels for the subsets (must match length of subset_values)}
+
 \item{geom}{character string specifying the type of geom to use for the Q-Q plot (default is "line")}
 }
 \value{
@@ -20,4 +34,42 @@ ggplot object
 }
 \description{
 Draws a Q-Q plot of p-values from a data.frame.
+}
+\examples{
+\dontrun{
+library(data.table)
+
+# Example 1: Multiple columns
+gwas_data <- data.table(
+  p_discovery = runif(10000),
+  p_replication = runif(10000)
+)
+qqplot(gwas_data, 
+       p_cols = c("p_discovery", "p_replication"),
+       p_col_labels = c("Discovery", "Replication"))
+
+# Example 2: Subsets of single column
+gwas_data <- data.table(
+  p_value = runif(10000),
+  chromosome = sample(1:22, 10000, replace = TRUE)
+)
+qqplot(gwas_data,
+       p_cols = "p_value",
+       subset_col = "chromosome",
+       subset_values = c(1, 2, 3),
+       subset_labels = c("Chr 1", "Chr 2", "Chr 3"))
+
+# Example 3: Multiple columns with subsetting
+gwas_data <- data.table(
+  p_males = runif(10000),
+  p_females = runif(10000),
+  significant = sample(c(TRUE, FALSE), 10000, replace = TRUE)
+)
+qqplot(gwas_data,
+       p_cols = c("p_males", "p_females"),
+       p_col_labels = c("Males", "Females"),
+       subset_col = "significant",
+       subset_values = c(TRUE, FALSE),
+       subset_labels = c("Significant", "Not Significant"))
+}
 }

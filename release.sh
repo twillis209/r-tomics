@@ -2,7 +2,7 @@
 set -e
 
 # Release automation script for tomics R package
-# This script automates the development workflow described in README.md
+# Automates version bumping, documentation, building, checking, and release creation
 
 # Check if we're in a git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
@@ -12,8 +12,12 @@ fi
 
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
-    echo "Error: You have uncommitted changes. Please commit them first."
-    exit 1
+    echo "Warning: You have uncommitted changes."
+    read -p "Continue anyway? [y/N]: " continue_choice
+    if [[ ! $continue_choice =~ ^[Yy]$ ]]; then
+        echo "Aborting."
+        exit 1
+    fi
 fi
 
 # Activate conda environment
@@ -22,41 +26,43 @@ source $(conda info --base)/etc/profile.d/conda.sh
 conda activate tomics-dev
 
 # Prompt for version bump
-read -p "Bump version? [y/N]: " bump_choice
-if [[ $bump_choice =~ ^[Yy]$ ]]; then
-    echo "Select version bump type:"
-    echo "1) patch (x.y.Z)"
-    echo "2) minor (x.Y.0)"
-    echo "3) major (X.0.0)"
-    read -p "Enter choice [1-3]: " version_choice
+echo "Do you want to bump the version?"
+echo "1) patch (x.y.Z)"
+echo "2) minor (x.Y.0)"
+echo "3) major (X.0.0)"
+echo "4) Skip version bump"
+read -p "Enter choice [1-4]: " version_choice
 
-    case $version_choice in
-        1)
-            version_type="patch"
-            ;;
-        2)
-            version_type="minor"
-            ;;
-        3)
-            version_type="major"
-            ;;
-        *)
-            echo "Invalid choice"
-            exit 1
-            ;;
-    esac
+case $version_choice in
+    1)
+        version_type="patch"
+        echo "Bumping $version_type version..."
+        R -e "usethis::use_version('$version_type')"
+        ;;
+    2)
+        version_type="minor"
+        echo "Bumping $version_type version..."
+        R -e "usethis::use_version('$version_type')"
+        ;;
+    3)
+        version_type="major"
+        echo "Bumping $version_type version..."
+        R -e "usethis::use_version('$version_type')"
+        ;;
+    4)
+        echo "Skipping version bump..."
+        ;;
+    *)
+        echo "Invalid choice"
+        exit 1
+        ;;
+esac
 
-    echo "Bumping $version_type version..."
-    R -e "usethis::use_version('$version_type')"
+echo "Updating documentation..."
+R -e "devtools::document()"
 
-    echo "Updating documentation..."
-    R -e "devtools::document()"
-
-    echo "Updating dependencies in DESCRIPTION..."
-    R -e "attachment::att_amend_desc()"
-else
-    echo "Skipping version bump..."
-fi
+echo "Updating dependencies in DESCRIPTION..."
+R -e "attachment::att_amend_desc()"
 
 echo "Building package..."
 R CMD build .
@@ -80,44 +86,40 @@ fi
 echo "Version: $version"
 echo "SHA256: $sha256"
 
-if [[ $bump_choice =~ ^[Yy]$ ]]; then
-    echo "Updating recipe.yml..."
-    # Platform-independent sed (use perl instead)
-    perl -i -pe "s/^(\\s*)version: [0-9]+\\.[0-9]+\\.[0-9]+/\${1}version: $version/" recipe.yml
-    perl -i -pe "s/sha256: .*/sha256: $sha256/" recipe.yml
+echo "Updating recipe.yml..."
+# Platform-independent sed (use perl instead)
+perl -i -pe "s/^(\\s*)version: [0-9]+\\.[0-9]+\\.[0-9]+/\${1}version: $version/" recipe.yml
+perl -i -pe "s/sha256: .*/sha256: $sha256/" recipe.yml
 
-    echo "Staging changes for commit..."
-    git add man DESCRIPTION NAMESPACE recipe.yml
+echo "Staging changes for commit..."
+git add man DESCRIPTION NAMESPACE recipe.yml
 
-    echo "Amending commit..."
-    git commit --amend --no-edit
+echo "Amending commit..."
+git commit --amend --no-edit
 
-    echo "Creating git tag..."
-    git tag "v$version"
+echo "Creating git tag..."
+git tag "v$version"
+
+read -p "Push to remote and create release? [y/N]: " push_choice
+if [[ $push_choice =~ ^[Yy]$ ]]; then
+    current_branch=$(git branch --show-current)
+    echo "Pushing branch $current_branch..."
+    git push -f origin "$current_branch"
+    
+    echo "Pushing tag v$version..."
+    git push -f origin "v$version"
+    
+    echo "Creating GitHub release..."
+    gh release create "v$version" $latest --notes-from-tag
+else
+    echo "Skipping push and release creation."
+    echo "You can manually push later with:"
+    echo "  git push origin $(git branch --show-current)"
+    echo "  git push -f origin v$version"
+    echo "  gh release create v$version $latest --notes-from-tag"
 fi
 
-if [[ $bump_choice =~ ^[Yy]$ ]]; then
-    read -p "Push to remote and create release? [y/N]: " push_choice
-    if [[ $push_choice =~ ^[Yy]$ ]]; then
-        current_branch=$(git branch --show-current)
-        echo "Pushing branch $current_branch..."
-        git push -f origin "$current_branch"
-        
-        echo "Pushing tag v$version..."
-        git push -f origin "v$version"
-        
-        echo "Creating GitHub release..."
-        gh release create "v$version" $latest --notes-from-tag
-    else
-        echo "Skipping push and release creation."
-        echo "You can manually push later with:"
-        echo "  git push origin $(git branch --show-current)"
-        echo "  git push -f origin v$version"
-        echo "  gh release create v$version $latest --notes-from-tag"
-    fi
-fi
-
-read -p "Build and upload to Anaconda? [y/N]: " build_choice
+read -p "Build conda package with rattler-build? [y/N]: " build_choice
 if [[ $build_choice =~ ^[Yy]$ ]]; then
     echo "Select target platform:"
     echo "1) linux-64"
