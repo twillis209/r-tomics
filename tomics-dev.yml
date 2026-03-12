@@ -1,0 +1,28 @@
+name: tomics-dev
+channels:
+- conda-forge
+- bioconda
+- twillis209
+dependencies:
+- r-base
+- r-data.table >= 1.17
+- r-magrittr
+- r-dplyr
+- r-tidyr
+- r-tidyselect
+- r-stringr
+- r-r.utils
+- r-devtools
+- r-usethis
+- r-attachment
+- r-ggplot2
+- r-ggtext
+- r-ggbreak
+- r-scales
+- r-ggrepel
+- r-vdiffr
+- r-pkgload
+- r-plotly
+- r-ggnewscale
+- r-gganimate
+- r-gifski
